@@ -2,6 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="t_player.cpp" />
+    <ClCompile Include="t_room.cpp" />
+    <ClCompile Include="t_tile_factory.cpp" />
+    <ClCompile Include="t_game.cpp" />
+    <ClCompile Include="t_pos.cpp" />
+    <ClCompile Include="t_infobox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Docs">
@@ -18,5 +24,16 @@
     <Text Include="..\Docs\Schedule.txt">
       <Filter>Docs</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="t_player.h" />
+    <ClInclude Include="t_dir.h" />
+    <ClInclude Include="global.h" />
+    <ClInclude Include="t_room.h" />
+    <ClInclude Include="t_rect.h" />
+    <ClInclude Include="t_tile_factory.h" />
+    <ClInclude Include="t_game.h" />
+    <ClInclude Include="t_pos.h" />
+    <ClInclude Include="t_infobox.h" />
   </ItemGroup>
 </Project>

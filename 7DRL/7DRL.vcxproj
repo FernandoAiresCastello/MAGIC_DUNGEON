@@ -146,11 +146,28 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="t_game.cpp" />
+    <ClCompile Include="t_infobox.cpp" />
+    <ClCompile Include="t_player.cpp" />
+    <ClCompile Include="t_pos.cpp" />
+    <ClCompile Include="t_room.cpp" />
+    <ClCompile Include="t_tile_factory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Docs\Idea 1.txt" />
     <Text Include="..\Docs\Idea 2.txt" />
     <Text Include="..\Docs\Schedule.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="global.h" />
+    <ClInclude Include="t_dir.h" />
+    <ClInclude Include="t_game.h" />
+    <ClInclude Include="t_infobox.h" />
+    <ClInclude Include="t_player.h" />
+    <ClInclude Include="t_pos.h" />
+    <ClInclude Include="t_rect.h" />
+    <ClInclude Include="t_room.h" />
+    <ClInclude Include="t_tile_factory.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
