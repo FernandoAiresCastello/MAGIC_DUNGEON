@@ -1,21 +1,20 @@
 #pragma once
 #include "global.h"
+#include "t_entity.h"
 #include "t_dir.h"
-#include "t_pos.h"
 
-class t_player
+class t_player : public t_entity
 {
 public:
+	t_player();
+	~t_player();
 
 	static void init_tiles(TGL& tgl);
 
-	void set_pos(int x, int y);
 	void draw(TGL& tgl);
 	void on_keypress(int key);
 
 private:
-
-	t_pos pos;
 	t_pos prev_pos;
 	bool can_move = true;
 	bool moved = false;

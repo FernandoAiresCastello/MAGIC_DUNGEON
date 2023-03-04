@@ -1,15 +1,17 @@
 #include "t_player.h"
 
+t_player::t_player()
+{
+}
+t_player::~t_player()
+{
+}
 void t_player::init_tiles(TGL& tgl)
 {
 	tgl.tile_file("wiz_1", "data/wiz_1.bmp");
 	tgl.tile_file("wiz_2", "data/wiz_2.bmp");
 	tgl.tile_add("wiz", "wiz_1", 5);
 	tgl.tile_add("wiz", "wiz_2");
-}
-void t_player::set_pos(int x, int y)
-{
-	pos.set(x, y);
 }
 void t_player::draw(TGL& tgl)
 {

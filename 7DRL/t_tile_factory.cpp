@@ -10,6 +10,4 @@ void t_tile_factory::make_tiles(TGL& tgl)
 	tgl.tile_add("sword_e", "sword_e");
 	tgl.tile_file("sword_w", "data/sword_w.bmp");
 	tgl.tile_add("sword_w", "sword_w");
-	tgl.tile_file("slime_1", "data/slime_1.bmp");
-	tgl.tile_add("slime_1", "slime_1");
 }

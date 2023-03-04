@@ -9,12 +9,9 @@ void t_room::init_tiles(TGL& tgl)
 }
 void t_room::draw(TGL& tgl)
 {
-	int x = 0;
-	int y = 0;
-	tgl.color_normal(0x202020, 0x303030, 0, 0);
-	for (int py = 0; py < height; py++) {
-		for (int px = 0; px < width; px++) {
-			tgl.draw_tiled("floor_1", x + px, y + py);
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			cells[y][x].draw(tgl, x, y);
 		}
 	}
 }

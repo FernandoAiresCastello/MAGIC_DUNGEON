@@ -4,6 +4,5 @@
 class t_tile_factory
 {
 public:
-
 	void make_tiles(TGL& tgl);
 };

@@ -1,6 +1,6 @@
 #include "t_infobox.h"
 
-void t_infobox::draw(TGL& tgl)
+void t_infobox::print_test(TGL& tgl)
 {
 	title(tgl, "Title");
 	println(tgl, 0, "Line 0");
@@ -8,9 +8,14 @@ void t_infobox::draw(TGL& tgl)
 	println(tgl, 2, "Line 2");
 	println(tgl, 3, "Line 3");
 }
+void t_infobox::print_debug(TGL& tgl, t_player& player)
+{
+	title(tgl, "Debug");
+	println(tgl, 0, tgl.fmt("Player: %i,%i", player.x(), player.y()));
+}
 void t_infobox::title(TGL& tgl, string str)
 {
-	tgl.color_normal(0xe0e0e0, 0x000000, 0, 0);
+	tgl.color_normal(0xd0d0d0, 0x000000, 0, 0);
 	for (int x = 0; x < tgl.cols(); x++) {
 		tgl.print_tiled(" ", x, y);
 	}
