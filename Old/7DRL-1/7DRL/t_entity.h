@@ -4,8 +4,8 @@
 class t_entity
 {
 public:
-	t_entity() {}
-	virtual ~t_entity() {}
+	t_entity();
+	virtual ~t_entity();
 
 	int x() { return pos.x; }
 	int y() { return pos.y; }

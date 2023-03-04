@@ -9,6 +9,8 @@
     <ClCompile Include="t_pos.cpp" />
     <ClCompile Include="t_infobox.cpp" />
     <ClCompile Include="t_room_cell.cpp" />
+    <ClCompile Include="t_entity.cpp" />
+    <ClCompile Include="t_enemy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Docs">
@@ -37,5 +39,7 @@
     <ClInclude Include="t_pos.h" />
     <ClInclude Include="t_infobox.h" />
     <ClInclude Include="t_room_cell.h" />
+    <ClInclude Include="t_entity.h" />
+    <ClInclude Include="t_enemy.h" />
   </ItemGroup>
 </Project>
