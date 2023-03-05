@@ -8,3 +8,7 @@ void t_map::draw(t_pos& pos)
 		}
 	}
 }
+t_mapcell& t_map::get_cell(t_pos pos)
+{
+	return cells[pos.y][pos.x];
+}

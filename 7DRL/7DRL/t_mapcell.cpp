@@ -2,6 +2,12 @@
 
 void t_mapcell::draw(int x, int y)
 {
-	tgl.color_normal(0x000000, 0x000000, 0x000000, 0x000000);
-	tgl.draw_tiled("solid", x, y);
+	if (!visited) {
+		tgl.draw_tiled("unknown", x, y);
+		return;
+	}
+	if (type == t_map_terrain::grass) {
+		tgl.draw_tiled("grass_1", x, y);
+		return;
+	}
 }

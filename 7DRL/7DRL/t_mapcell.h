@@ -1,8 +1,14 @@
 #pragma once
 #include "global.h"
 
+enum class t_map_terrain
+{
+	unknown, grass
+};
+
 struct t_mapcell
 {
+	t_map_terrain type = t_map_terrain::grass;
 	bool visited = false;
 	string title = "Undefined";
 
