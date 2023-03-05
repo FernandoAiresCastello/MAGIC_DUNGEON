@@ -10,6 +10,7 @@
     <ClCompile Include="t_tileloader.cpp" />
     <ClCompile Include="t_entity.cpp" />
     <ClCompile Include="t_player.cpp" />
+    <ClCompile Include="t_stats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="global.h" />
@@ -21,5 +22,6 @@
     <ClInclude Include="t_pos.h" />
     <ClInclude Include="t_entity.h" />
     <ClInclude Include="t_player.h" />
+    <ClInclude Include="t_stats.h" />
   </ItemGroup>
 </Project>

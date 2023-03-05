@@ -153,6 +153,7 @@
     <ClCompile Include="t_mapcell.cpp" />
     <ClCompile Include="t_player.cpp" />
     <ClCompile Include="t_screen.cpp" />
+    <ClCompile Include="t_stats.cpp" />
     <ClCompile Include="t_tileloader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +165,7 @@
     <ClInclude Include="t_player.h" />
     <ClInclude Include="t_pos.h" />
     <ClInclude Include="t_screen.h" />
+    <ClInclude Include="t_stats.h" />
     <ClInclude Include="t_tileloader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

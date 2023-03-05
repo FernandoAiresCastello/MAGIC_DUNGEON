@@ -3,12 +3,13 @@
 
 enum class t_map_terrain
 {
-	unknown, grass
+	unknown, grass, forest
 };
 
 struct t_mapcell
 {
 	t_map_terrain type = t_map_terrain::grass;
+
 	bool visited = false;
 	string title = "Undefined";
 
