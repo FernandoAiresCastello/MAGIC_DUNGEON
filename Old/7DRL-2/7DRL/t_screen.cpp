@@ -48,9 +48,9 @@ void t_screen::print_player_stats(t_player& player)
 	tgl.font_color(stats.fore_color);
 	tgl.print_tiled(values, stats.pos.x, stats.pos.y);
 
-	tgl.draw_tiled("heart_1", stats.pos.x, stats.pos.y);
-	tgl.draw_tiled("magic_1", stats.pos.x + 11, stats.pos.y);
-	tgl.draw_tiled("star_1", stats.pos.x + 20, stats.pos.y);
+	//tgl.draw_tiled("heart_1", stats.pos.x, stats.pos.y);
+	//tgl.draw_tiled("magic_1", stats.pos.x + 11, stats.pos.y);
+	//tgl.draw_tiled("star_1", stats.pos.x + 20, stats.pos.y);
 }
 void t_screen::print_player_stats_detail(t_player& player)
 {

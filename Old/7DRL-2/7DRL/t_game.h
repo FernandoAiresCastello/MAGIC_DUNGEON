@@ -7,4 +7,7 @@
 struct t_game
 {
 	void run();
+
+private:
+	void exec_cmd(string cmd);
 };

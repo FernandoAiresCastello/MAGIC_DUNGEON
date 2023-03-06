@@ -4,15 +4,13 @@ void t_tileloader::load_all()
 {
 	tgl.transparency_key(0xffffff);
 
-	load("player", "player_1");
-	load("player", "player_2");
+	load("player", "player_up_1");
+	load("player", "player_up_2");
 
-	load_single("unknown");
-	load_single("grass_1");
-	load_single("forest_1");
-	load_single("heart_1");
-	load_single("magic_1");
-	load_single("star_1");
+	load_single("unvisited_1");
+	load_single("unvisited_2");
+	load_single("empty_1");
+	load_single("lonestar_1");
 }
 void t_tileloader::load(string id, string filename)
 {
