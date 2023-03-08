@@ -13,40 +13,46 @@ struct t_location {
 	t_terrain terrain = t_terrain::ground;
 	t_entity entity = t_entity::none;
 };
-struct t_world {
+struct t_floor {
 	static const int width = 256;
 	static const int height = 256;
 	t_location oob = t_location();
-	t_world() {
+	int forecolor = 0xffffff;
+	int backcolor = 0x000000;
+	t_floor() {
 		oob.terrain = t_terrain::oob;
 	}
 	t_location& get(int x, int y) {
-		if (x >= 0 && y >= 0 && x < world.width && y < world.height) {
+		if (x >= 0 && y >= 0 && x < width && y < height) {
 			return locations[y][x];
 		} else {
 			return oob;
 		}
 	}
 	void set(t_entity e, int x, int y) {
-		if (x >= 0 && y >= 0 && x < world.width && y < world.height) {
+		if (x >= 0 && y >= 0 && x < width && y < height) {
 			locations[y][x].entity = e;
 		}
 	}
 	void set(t_terrain t, int x, int y) {
-		if (x >= 0 && y >= 0 && x < world.width && y < world.height) {
+		if (x >= 0 && y >= 0 && x < width && y < height) {
 			locations[y][x].terrain = t;
 		}
 	}
 	void visit(int x, int y) {
-		if (x >= 0 && y >= 0 && x < world.width && y < world.height) {
+		if (x >= 0 && y >= 0 && x < width && y < height) {
 			if (!locations[y][x].visited) {
 				locations[y][x].visited = true;
 			}
 		}
 	}
+	void color(int fg, int bg) {
+		forecolor = fg;
+		backcolor = bg;
+	}
 private:
 	t_location locations[height][width];
-} world;
+} cur_floor;
 struct {
 	int scroll_x = 0;
 	int scroll_y = 0;
@@ -54,19 +60,24 @@ struct {
 		scroll_x = x;
 		scroll_y = y;
 	}
+	void scroll(int dx, int dy) {
+		scroll_x += dx;
+		scroll_y += dy;
+	}
 } view;
 struct {
 	int cols;
 	int rows;
 } screen;
 struct {
-	int getx() { return x; }
-	int gety() { return y; }
-	int getprevx() { return prevx; }
-	int getprevy() { return prevy; }
+	int get_x() { return x; }
+	int get_y() { return y; }
+	int get_prevx() { return prevx; }
+	int get_prevy() { return prevy; }
+	int get_life() { return life; }
 
 	bool oob() {
-		return x < 0 || y < 0 || x >= world.width || y >= world.height;
+		return x < 0 || y < 0 || x >= cur_floor.width || y >= cur_floor.height;
 	}
 	void setpos(int newx, int newy) {
 		prevx = x;
@@ -79,16 +90,18 @@ struct {
 		int newy = y + dy;
 		if (can_move_to(newx, newy)) {
 			setpos(newx, newy);
+			view.scroll(dx, dy);
 		}
 	}
 	bool can_move_to(int newx, int newy) {
-		return world.get(newx, newy).terrain == t_terrain::ground;
+		return cur_floor.get(newx, newy).terrain == t_terrain::ground;
 	}
 private:
 	int x = 0;
 	int y = 0;
 	int prevx = x;
 	int prevy = y;
+	int life = 100;
 } player;
 
 void init_tiles()
@@ -109,25 +122,49 @@ void init_tiles()
 		"00000000"
 		"00000000"
 		"00000000"
-		"00011000"
-		"00011000"
+		"00010000"
+		"00000000"
 		"00000000"
 		"00000000"
 		"00000000"
 	);
 	tgl.tile_add("ground", "ground");
 
-	tgl.tile_new("oob",
+	tgl.tile_new("empty",
 		"00000000"
-		"01000010"
-		"00100100"
-		"00011000"
-		"00011000"
-		"00100100"
-		"01000010"
+		"00000000"
+		"00000000"
+		"00000000"
+		"00000000"
+		"00000000"
+		"00000000"
 		"00000000"
 	);
-	tgl.tile_add("oob", "oob");
+	tgl.tile_add("empty", "empty");
+
+	tgl.tile_new("solid",
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+	);
+	tgl.tile_add("solid", "solid");
+
+	tgl.tile_new("marker",
+		"10000001"
+		"01000010"
+		"00100100"
+		"00011000"
+		"00011000"
+		"00100100"
+		"01000010"
+		"10000001"
+	);
+	tgl.tile_add("marker", "marker");
 
 	tgl.tile_new("wall",
 		"11111011"
@@ -140,42 +177,121 @@ void init_tiles()
 		"00000000"
 	);
 	tgl.tile_add("wall", "wall");
+
+	tgl.tile_new("wall_2",
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+		"11111111"
+	);
+	tgl.tile_add("wall_2", "wall_2");
 }
-void init_world()
+void generate_room(int x, int y, int w, int h)
 {
-	world.set(t_terrain::wall, 0, 0);
-	world.set(t_terrain::wall, 1, 1);
+	// walls
+	for (int px = x; px <= x + w; px++) {
+		cur_floor.set(t_terrain::wall, px, y);
+		cur_floor.set(t_terrain::wall, px, y + h);
+	}
+	for (int py = y; py <= y + h; py++) {
+		cur_floor.set(t_terrain::wall, x, py);
+		cur_floor.set(t_terrain::wall, x + w, py);
+	}
+	// entrance / exit
+	int exit_x = 0;
+	int exit_y = 0;
+	int exit_placement = tgl.rnd(0, 3);
+	if (exit_placement == 0) {
+		exit_y = y;
+		exit_x = tgl.rnd(x + 1, x + w - 1);
+	} else if (exit_placement == 1) {
+		exit_y = y + h - 1;
+		exit_x = tgl.rnd(x + 1, x + w - 1);
+	} else if (exit_placement == 2) {
+		exit_x = x;
+		exit_y = tgl.rnd(y + 1, y + h - 1);
+	} else if (exit_placement == 3) {
+		exit_x = x + w - 1;
+		exit_y = tgl.rnd(y + 1, y + h - 1);
+	}
+	cur_floor.set(t_terrain::ground, exit_x, exit_y);
 }
-void draw_world()
+void generate_wall(int x, int y, int length, int orient)
+{
+	int px = x;
+	int py = y;
+	for (int i = 0; i <= length; i++) {
+		cur_floor.set(t_terrain::wall, px, py);
+		if (orient == 0) {
+			px++;
+		} else {
+			py++;
+		}
+	}
+}
+void init_current_floor()
+{
+	const int max_room_w = 20;
+	const int max_room_h = 20;
+	const int max_wall_len = 40;
+
+	// corners
+	for (int x = 0; x < cur_floor.width; x++) {
+		cur_floor.set(t_terrain::wall, x, 0);
+		cur_floor.set(t_terrain::wall, x, cur_floor.height - 1);
+	}
+	for (int y = 0; y < cur_floor.height; y++) {
+		cur_floor.set(t_terrain::wall, 0, y);
+		cur_floor.set(t_terrain::wall, cur_floor.width - 1, y);
+	}
+	// rooms
+	for (int i = 0; i < 50; i++) {
+		int x = tgl.rnd(0, cur_floor.width);
+		int y = tgl.rnd(0, cur_floor.height);
+		int w = tgl.rnd(2, max_room_w);
+		int h = tgl.rnd(2, max_room_h);
+		generate_room(x, y, w, h);
+	}
+	// random walls
+	for (int i = 0; i < 50; i++) {
+		int x = tgl.rnd(0, cur_floor.width);
+		int y = tgl.rnd(0, cur_floor.height);
+		int length = tgl.rnd(2, max_wall_len);
+		int orient = tgl.rnd(0, 1);
+		generate_wall(x, y, length, orient);
+	}
+}
+void draw_current_floor()
 {
 	int scrx = 0;
 	int scry = 0;
 
-	tgl.clear();
-	tgl.transparent(true);
+	tgl.tile_transparent(true);
+	tgl.backcolor(cur_floor.backcolor);
+	tgl.color_binary(cur_floor.forecolor);
 
 	for (int mapy = view.scroll_y; mapy < view.scroll_y + screen.rows; mapy++) {
 		for (int mapx = view.scroll_x; mapx < view.scroll_x + screen.cols; mapx++) {
-			if (mapx >= 0 && mapy >= 0 && mapx < world.width && mapy < world.height) {
-				t_location& loc = world.get(mapx, mapy);
+			if (mapx >= 0 && mapy >= 0 && mapx < cur_floor.width && mapy < cur_floor.height) {
+				t_location& loc = cur_floor.get(mapx, mapy);
 				if (loc.visited) {
 					// terrain
 					if (loc.terrain == t_terrain::ground) {
-						tgl.color_binary(0x202020);
 						tgl.draw_tiled("ground", scrx, scry);
 					} else if (loc.terrain == t_terrain::wall) {
-						tgl.color_binary(0x808080);
 						tgl.draw_tiled("wall", scrx, scry);
 					}
 					// entities
 					if (loc.entity == t_entity::player) {
-						tgl.color_binary(0xd0d0d0);
 						tgl.draw_tiled("player", scrx, scry);
 					}
 				}
-			} else {
-				tgl.color_binary(0x202020);
-				tgl.draw_tiled("oob", scrx, scry);
+			} else { // out-of-bounds
+				tgl.draw_tiled("empty", scrx, scry);
 			}
 			scrx++;
 		}
@@ -183,53 +299,67 @@ void draw_world()
 		scrx = 0;
 	}
 }
+void draw_info()
+{
+	tgl.font_transparent(false);
+	tgl.font_color(cur_floor.forecolor, cur_floor.backcolor);
+	tgl.print_tiled(tgl.fmt("e%in%i", player.get_x(), player.get_y()), 1, 0);
+	tgl.print_tiled(tgl.fmt("~%03i", player.get_life()), 1, screen.rows - 1);
+}
 void sync_player()
 {
-	world.set(t_entity::none, player.getprevx(), player.getprevy());
-	world.set(t_entity::player, player.getx(), player.gety());
+	cur_floor.set(t_entity::none, player.get_prevx(), player.get_prevy());
+	cur_floor.set(t_entity::player, player.get_x(), player.get_y());
 }
 void visit_surroundings()
 {
-	int x = player.getx();
-	int y = player.gety();
+	int x = player.get_x();
+	int y = player.get_y();
 
-	world.visit(x - 1, y - 1);
-	world.visit(x + 0, y - 1);
-	world.visit(x + 1, y - 1);
-	world.visit(x - 1, y);
-	world.visit(x, y);
-	world.visit(x + 1, y);
-	world.visit(x - 1, y + 1);
-	world.visit(x + 0, y + 1);
-	world.visit(x + 1, y + 1);
+	cur_floor.visit(x - 1, y - 1);
+	cur_floor.visit(x + 0, y - 1);
+	cur_floor.visit(x + 1, y - 1);
+	cur_floor.visit(x - 1, y);
+	cur_floor.visit(x, y);
+	cur_floor.visit(x + 1, y);
+	cur_floor.visit(x - 1, y + 1);
+	cur_floor.visit(x + 0, y + 1);
+	cur_floor.visit(x + 1, y + 1);
 }
-int main(int argc, char* argv[])
+void game_init()
 {
 	tgl.window_gbc(0x000000, 5);
 	screen.cols = tgl.cols();
 	screen.rows = tgl.rows();
 
 	init_tiles();
-	init_world();
+	init_current_floor();
 
-	player.setpos(5, 5);
-	view.setscrl(0, 0);
+	cur_floor.color(0x30ff50, 0x101010);
+	player.setpos(tgl.rnd(1, 254), tgl.rnd(1, 254));
+	view.setscrl(player.get_x() - screen.cols / 2 + 1, player.get_y() - screen.rows / 2 + 1);
+}
+void game_loop()
+{
+	tgl.clear();
+	sync_player();
+	visit_surroundings();
+	draw_current_floor();
+	draw_info();
+	tgl.system();
 
+	if (tgl.kb_esc()) tgl.exit();
+	int key = tgl.kb_lastkey();
+	if (key == SDLK_RIGHT) player.move(1, 0);
+	else if (key == SDLK_LEFT) player.move(-1, 0);
+	else if (key == SDLK_DOWN) player.move(0, 1);
+	else if (key == SDLK_UP) player.move(0, -1);
+}
+int main(int argc, char* argv[])
+{
+	game_init();
 	while (tgl.running()) {
-		
-		tgl.clear();
-			sync_player();
-			visit_surroundings();
-			draw_world();
-		tgl.system();
-
-		if (tgl.kb_esc()) tgl.exit();
-		int key = tgl.kb_lastkey();
-		if (key == SDLK_RIGHT) player.move(1, 0);
-		else if (key == SDLK_LEFT) player.move(-1, 0);
-		else if (key == SDLK_DOWN) player.move(0, 1);
-		else if (key == SDLK_UP) player.move(0, -1);
+		game_loop();
 	}
-
 	return tgl.exit();
 }
