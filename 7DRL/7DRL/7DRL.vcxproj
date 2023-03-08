@@ -145,23 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="global.cpp" />
-    <ClCompile Include="t_game.cpp" />
-    <ClCompile Include="t_room.cpp" />
-    <ClCompile Include="t_castle.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="t_location.cpp" />
-    <ClCompile Include="t_room_renderer.cpp" />
-    <ClCompile Include="t_tile_loader.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="global.h" />
-    <ClInclude Include="t_game.h" />
-    <ClInclude Include="t_room.h" />
-    <ClInclude Include="t_castle.h" />
-    <ClInclude Include="t_location.h" />
-    <ClInclude Include="t_room_renderer.h" />
-    <ClInclude Include="t_tile_loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
