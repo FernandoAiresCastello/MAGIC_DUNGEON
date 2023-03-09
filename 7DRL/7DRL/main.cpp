@@ -65,11 +65,25 @@ struct t_floor {
 			locations[y][x].terrain_variant = tgl.rnd(0, 2);
 		}
 	}
+	void detonate_wall(int x, int y)
+	{
+		if (get(x, y).terrain == t_terrain::wall) {
+			set(t_terrain::ground, x, y);
+		}
+	}
 	void visit(int x, int y)
 	{
 		if (x >= 0 && y >= 0 && x < width && y < height) {
 			if (!locations[y][x].visited) {
 				locations[y][x].visited = true;
+			}
+		}
+	}
+	void unvisit(int x, int y)
+	{
+		if (x >= 0 && y >= 0 && x < width && y < height) {
+			if (locations[y][x].visited) {
+				locations[y][x].visited = false;
 			}
 		}
 	}
@@ -86,6 +100,7 @@ t_floor cur_floor;
 struct t_view {
 	int scroll_x = 0;
 	int scroll_y = 0;
+
 	void setscrl(int x, int y)
 	{
 		scroll_x = x;
@@ -99,8 +114,51 @@ struct t_view {
 };
 t_view view;
 
+struct t_bomb {
+	int x = -1;
+	int y = -1;
+	bool active = false;
+	int timer = 0;
+	const int timer_max = 200;
+
+	void activate(int bx, int by)
+	{
+		if (!active) {
+			x = bx;
+			y = by;
+			timer = 0;
+			active = true;
+		}
+	}
+	void tick()
+	{
+		if (active) {
+			timer++;
+			if (timer >= timer_max) {
+				detonate();
+			}
+		}
+	}
+	void detonate()
+	{
+		timer = 0;
+		active = false;
+
+		cur_floor.detonate_wall(x - 1, y - 1);
+		cur_floor.detonate_wall(x + 0, y - 1);
+		cur_floor.detonate_wall(x + 1, y - 1);
+		cur_floor.detonate_wall(x - 1, y);
+		cur_floor.detonate_wall(x, y);
+		cur_floor.detonate_wall(x + 1, y);
+		cur_floor.detonate_wall(x - 1, y + 1);
+		cur_floor.detonate_wall(x + 0, y + 1);
+		cur_floor.detonate_wall(x + 1, y + 1);
+	}
+};
+
 struct t_player {
 	t_direction dir = t_direction::none;
+	t_bomb bomb;
 
 	int get_x() { return x; }
 	int get_y() { return y; }
@@ -137,8 +195,25 @@ struct t_player {
 	}
 	bool can_move_to(int newx, int newy)
 	{
-		t_terrain& t = cur_floor.get(newx, newy).terrain;
+		t_location& loc = cur_floor.get(newx, newy);
+		t_terrain& t = loc.terrain;
+		t_entity& e = loc.entity;
+		
 		return t == t_terrain::ground || t == t_terrain::stairs;
+	}
+	t_location& getloc()
+	{
+		return cur_floor.get(x, y);
+	}
+	bool is_on_stairs()
+	{
+		return getloc().terrain == t_terrain::stairs;
+	}
+	void drop_bomb()
+	{
+		if (!bomb.active) {
+			bomb.activate(x, y);
+		}
 	}
 private:
 	int x = 0;
@@ -244,6 +319,7 @@ void init_current_floor()
 	// base
 	for (int y = 0; y < cur_floor.height; y++) {
 		for (int x = 0; x < cur_floor.width; x++) {
+			cur_floor.unvisit(x, y);
 			cur_floor.set(t_terrain::ground, x, y);
 		}
 	}
@@ -297,6 +373,8 @@ void draw_current_floor()
 					// entities
 					if (loc.entity == t_entity::player) {
 						tgl.draw_tiled("player", scrx, scry);
+					} else if (player.bomb.active && player.bomb.x == mapx && player.bomb.y == mapy) {
+						tgl.draw_tiled("bomb", scrx, scry);
 					}
 					// terrain
 					else {
@@ -355,18 +433,35 @@ void visit_surroundings()
 	cur_floor.visit(x + 0, y + 1);
 	cur_floor.visit(x + 1, y + 1);
 }
+
 void init_tiles();
+void goto_next_floor();
 void game_init()
 {
 	tgl.window_gbc(0x000000, 5);
 	screen.cols = tgl.cols();
 	screen.rows = tgl.rows();
-	
-	init_tiles();
-	init_current_floor();
 
+	init_tiles();
+	goto_next_floor();
+}
+void goto_next_floor()
+{
+	init_current_floor();
 	player.setpos(tgl.rnd(1, cur_floor.width - 1), tgl.rnd(1, cur_floor.height - 1));
 	view.setscrl(player.get_x() - screen.cols / 2 + 1, player.get_y() - screen.rows / 2 + 1);
+}
+void check_collisions()
+{
+	if (player.is_on_stairs()) {
+		goto_next_floor();
+	}
+}
+void tick_bomb_timers()
+{
+	if (player.bomb.active) {
+		player.bomb.tick();
+	}
 }
 void game_loop()
 {
@@ -377,13 +472,18 @@ void game_loop()
 	draw_info();
 	tgl.system();
 
-	if (tgl.kb_esc()) tgl.exit();
+	check_collisions();
+	tick_bomb_timers();
+
 	int key = tgl.kb_lastkey();
+	if (tgl.kb_esc()) tgl.exit();
+
 	if (key == SDLK_RIGHT) player.move(1, 0);
 	else if (key == SDLK_LEFT) player.move(-1, 0);
 	else if (key == SDLK_DOWN) player.move(0, 1);
 	else if (key == SDLK_UP) player.move(0, -1);
 	else if (key == SDLK_c) randomize_color_scheme();
+	else if (key == SDLK_SPACE) player.drop_bomb();
 }
 int main(int argc, char* argv[])
 {
@@ -515,17 +615,28 @@ void init_tiles()
 	tgl.tile_add("stairs", "stairs", 3);
 	tgl.tile_add("stairs", "empty");
 
-	tgl.tile_new("arrow_up",
-		"00010000"
-		"00111000"
-		"01111100"
-		"11111110"
-		"00111000"
-		"00111000"
-		"00111000"
+	tgl.tile_new("bomb_1",
+		"00000100"
+		"00001000"
+		"00111100"
+		"01110110"
+		"01111110"
+		"00111100"
+		"00000000"
 		"00000000"
 	);
-	tgl.tile_add("arrow_up", "arrow_up");
+	tgl.tile_new("bomb_2",
+		"00000000"
+		"00010000"
+		"00001000"
+		"00111100"
+		"01110110"
+		"01111110"
+		"00111100"
+		"00000000"
+	);
+	tgl.tile_add("bomb", "bomb_1");
+	tgl.tile_add("bomb", "bomb_2");
 
 	tgl.tile_new("arrow_down",
 		"00111000"
