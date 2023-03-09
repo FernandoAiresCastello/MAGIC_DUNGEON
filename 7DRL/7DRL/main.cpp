@@ -30,15 +30,11 @@ struct t_location {
 struct t_exit {
 	int x = -1;
 	int y = -1;
-	bool exists()
-	{
-		return x != -1 && y != -1;
-	}
 };
 
 struct t_floor {
-	static const int width = 256;
-	static const int height = 256;
+	static const int width = 102;
+	static const int height = 102;
 	t_location oob = t_location();
 	rgb forecolor = 0xffffff;
 	rgb backcolor = 0x000000;
@@ -175,27 +171,20 @@ void generate_room(int x, int y, int w, int h)
 	int exit_x = 0;
 	int exit_y = 0;
 	int exit_placement = tgl.rnd(0, 3);
-	if (exit_placement == 0) {
+	if (exit_placement == 0) { // on top corner
 		exit_y = y;
 		exit_x = tgl.rnd(x + 1, x + w - 1);
-	} else if (exit_placement == 1) {
-		exit_y = y + h - 1;
+	} else if (exit_placement == 1) { // on bottom corner
+		exit_y = y + h;
 		exit_x = tgl.rnd(x + 1, x + w - 1);
-	} else if (exit_placement == 2) {
+	} else if (exit_placement == 2) { // on left corner
 		exit_x = x;
 		exit_y = tgl.rnd(y + 1, y + h - 1);
-	} else if (exit_placement == 3) {
-		exit_x = x + w - 1;
+	} else if (exit_placement == 3) { // on right corner
+		exit_x = x + w;
 		exit_y = tgl.rnd(y + 1, y + h - 1);
 	}
 	cur_floor.set(t_terrain::ground, exit_x, exit_y);
-	
-	// stairs (floor exit)
-	if (!cur_floor.floor_exit.exists()) {
-		int stx = tgl.rnd(x + 1, x + w - 1);
-		int sty = tgl.rnd(y + 1, y + h - 1);
-		generate_exit(stx, sty);
-	}
 }
 void generate_wall(int x, int y, int length, int orient)
 {
@@ -210,11 +199,47 @@ void generate_wall(int x, int y, int length, int orient)
 		}
 	}
 }
+
+struct {
+	vector<rgb> background = {
+		0x101010, // black,
+		0xc0c0c0, // gray,
+		0x202050, // indigo
+		0x3030c0, // blue,
+		0x802020, // red
+	};
+	vector<rgb> foreground = {
+		0x3050ff, // blue
+		0x30ffff, // cyan
+		0x30ff50, // green
+		0xff4080, // pink
+		0xff4040, // red
+		0xffa030, // orange
+		0xffff50, // yellow
+		0xe0e0e0, // white
+		0x404040, // gray
+	};
+} color_scheme;
+
+void randomize_color_scheme()
+{
+	int fgc_index = tgl.rnd(0, color_scheme.foreground.size() - 1);
+	int bgc_index = tgl.rnd(0, color_scheme.background.size() - 1);
+	cur_floor.color(color_scheme.foreground[fgc_index], color_scheme.background[bgc_index]);
+}
 void init_current_floor()
 {
+	const int min_room_w = 3;
+	const int min_room_h = 3;
 	const int max_room_w = 20;
 	const int max_room_h = 20;
 	const int max_wall_len = 40;
+	const int room_count = 50;
+	const int random_wall_count = 40;
+	const int exit_count = 5;
+
+	// color scheme
+	randomize_color_scheme();
 
 	// base
 	for (int y = 0; y < cur_floor.height; y++) {
@@ -233,20 +258,26 @@ void init_current_floor()
 		cur_floor.set(t_terrain::wall, cur_floor.width - 1, y);
 	}
 	// rooms
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < room_count; i++) {
 		int x = tgl.rnd(0, cur_floor.width);
 		int y = tgl.rnd(0, cur_floor.height);
-		int w = tgl.rnd(2, max_room_w);
-		int h = tgl.rnd(2, max_room_h);
+		int w = tgl.rnd(min_room_w, max_room_w);
+		int h = tgl.rnd(min_room_h, max_room_h);
 		generate_room(x, y, w, h);
 	}
 	// random walls
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < random_wall_count; i++) {
 		int x = tgl.rnd(0, cur_floor.width);
 		int y = tgl.rnd(0, cur_floor.height);
 		int length = tgl.rnd(2, max_wall_len);
 		int orient = tgl.rnd(0, 1);
 		generate_wall(x, y, length, orient);
+	}
+	// exits
+	for (int i = 0; i < exit_count; i++) {
+		int stx = tgl.rnd(1, cur_floor.width - 2);
+		int sty = tgl.rnd(1, cur_floor.height - 2);
+		generate_exit(stx, sty);
 	}
 }
 void draw_current_floor()
@@ -302,7 +333,6 @@ void draw_info()
 	tgl.font_transparent(false);
 	tgl.font_color(cur_floor.forecolor, cur_floor.backcolor);
 	tgl.print_tiled(tgl.fmt("E%iN%i", player.get_x(), player.get_y()), 1, 0);
-	tgl.print_tiled(tgl.fmt("%i,%i", cur_floor.floor_exit.x, cur_floor.floor_exit.y), 10, 0);
 	tgl.print_tiled(tgl.fmt("~%03i", player.get_life()), 1, screen.rows - 1);
 }
 void sync_player()
@@ -335,8 +365,7 @@ void game_init()
 	init_tiles();
 	init_current_floor();
 
-	cur_floor.color(0x30ff50, 0x101010);
-	player.setpos(tgl.rnd(1, 254), tgl.rnd(1, 254));
+	player.setpos(tgl.rnd(1, cur_floor.width - 1), tgl.rnd(1, cur_floor.height - 1));
 	view.setscrl(player.get_x() - screen.cols / 2 + 1, player.get_y() - screen.rows / 2 + 1);
 }
 void game_loop()
@@ -354,6 +383,7 @@ void game_loop()
 	else if (key == SDLK_LEFT) player.move(-1, 0);
 	else if (key == SDLK_DOWN) player.move(0, 1);
 	else if (key == SDLK_UP) player.move(0, -1);
+	else if (key == SDLK_c) randomize_color_scheme();
 }
 int main(int argc, char* argv[])
 {
@@ -365,17 +395,28 @@ int main(int argc, char* argv[])
 }
 void init_tiles()
 {
-	tgl.tile_new("player",
+	tgl.tile_new("player_1",
+		"00111000"
+		"00111010"
+		"11010010"
+		"11111010"
+		"11010111"
+		"00111010"
+		"01101000"
+		"00001100"
+	);
+	tgl.tile_new("player_2",
 		"00111010"
 		"00111010"
 		"11010010"
 		"11111111"
 		"11010010"
 		"00111000"
-		"00101000"
-		"01101100"
+		"00101100"
+		"01100000"
 	);
-	tgl.tile_add("player", "player");
+	tgl.tile_add("player", "player_1");
+	tgl.tile_add("player", "player_2");
 
 	tgl.tile_new("ground",
 		"00000000"
@@ -462,16 +503,17 @@ void init_tiles()
 	tgl.tile_add("wall", "wall");
 
 	tgl.tile_new("stairs",
-		"11000000"
-		"11000000"
 		"00000000"
+		"11100000"
+		"11100000"
 		"11111000"
 		"11111000"
+		"11111110"
+		"11111110"
 		"00000000"
-		"11111111"
-		"11111111"
 	);
-	tgl.tile_add("stairs", "stairs");
+	tgl.tile_add("stairs", "stairs", 3);
+	tgl.tile_add("stairs", "empty");
 
 	tgl.tile_new("arrow_up",
 		"00010000"
