@@ -3,4 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs.txt" />
+  </ItemGroup>
 </Project>
