@@ -31,10 +31,13 @@ struct t_exit {
 struct t_floor {
 	static const int width = 100;
 	static const int height = 100;
+	static const int total_locations = width * height;
 	t_location oob = t_location();
 	rgb forecolor = 0xffffff;
 	rgb backcolor = 0x000000;
 	t_exit floor_exit;
+	int visited_count = 0;
+	int percent_visited = 0;
 
 	t_floor()
 	{
@@ -73,6 +76,8 @@ struct t_floor {
 		if (x >= 0 && y >= 0 && x < width && y < height) {
 			if (!locations[y][x].visited) {
 				locations[y][x].visited = true;
+				visited_count++;
+				calc_percent_visited();
 			}
 		}
 	}
@@ -81,6 +86,8 @@ struct t_floor {
 		if (x >= 0 && y >= 0 && x < width && y < height) {
 			if (locations[y][x].visited) {
 				locations[y][x].visited = false;
+				visited_count--;
+				calc_percent_visited();
 			}
 		}
 	}
@@ -95,6 +102,11 @@ struct t_floor {
 	}
 private:
 	t_location locations[height][width];
+
+	void calc_percent_visited()
+	{
+		percent_visited = (visited_count * 100) / total_locations;
+	}
 };
 t_floor cur_floor;
 
@@ -409,7 +421,7 @@ struct {
 		{ 0x101010, 0x606060 }, // black-gray
 		{ 0xa02020, 0x606060 }, // red-gray
 		// red backgrounds
-		{ 0xe01010, 0x901010 }, // red-red
+		//{ 0xe01010, 0x901010 }, // red-red
 		{ 0x10c0ff, 0xa02020 }, // cyan-red
 		{ 0xffa030, 0xa02020 }, // amber-red
 		{ 0xe0e040, 0xa02020 }, // yellow-red
@@ -439,14 +451,14 @@ struct {
 		// blue backgrounds
 		{ 0xff4080, 0x3030c0 }, // pink-blue
 		{ 0x101010, 0x3030c0 }, // black-blue
-		{ 0x3050ff, 0x3030c0 }, // blue-blue
+		//{ 0x3050ff, 0x3030c0 }, // blue-blue
 		{ 0x30ffff, 0x3030c0 }, // cyan-blue
 		{ 0xff6060, 0x3030c0 }, // red-blue		
 		{ 0x30ff50, 0x3030c0 }, // green-blue
 		{ 0xffff50, 0x3030c0 }, // yellow-blue
 		{ 0xe0e0e0, 0x3030c0 }, // white-blue
 		// white backgrounds
-		{ 0xffffff, 0xd0d0d0 }, // white-white
+		//{ 0xffffff, 0xd0d0d0 }, // white-white
 		{ 0x10c0c0, 0xe0e0e0 }, // cyan-white
 		{ 0x1030e0, 0xe0e0e0 }, // blue-white
 		{ 0xe02020, 0xe0e0e0 }, // red-white
@@ -635,7 +647,8 @@ void draw_info()
 
 	// top
 	int y = 0;
-	tgl.print_tiled(tgl.fmt("F%i E%iN%i", player.get_floor(), player.get_x(), player.get_y()), 1, y);
+	tgl.print_tiled(tgl.fmt("F%i E%iN%i %i%%", 
+		player.get_floor(), player.get_x(), player.get_y(), cur_floor.percent_visited), 1, y);
 	// bottom
 	y = screen.rows - 1;
 	tgl.print_tiled(tgl.fmt("~%03i  %02i %8i", 
@@ -686,7 +699,10 @@ void game_init()
 }
 void draw_floor_intro()
 {
-	tgl.backcolor(cur_floor.backcolor);
+	const rgb forecolor = 0xffffff;
+	const rgb backcolor = 0x101010;
+
+	tgl.backcolor(backcolor);
 
 	int timer = 100;
 	while (tgl.running() && timer > 0) {
@@ -701,7 +717,7 @@ void draw_floor_intro()
 	while (tgl.running() && timer > 0) {
 		tgl.clear();
 		tgl.font_transparent(false);
-		tgl.font_color(cur_floor.forecolor, cur_floor.backcolor);
+		tgl.font_color(forecolor, backcolor);
 		tgl.print_tiled(tgl.fmt("FLOOR %4i", player.get_floor()), 5, 8);
 		tgl.system();
 		timer--;
