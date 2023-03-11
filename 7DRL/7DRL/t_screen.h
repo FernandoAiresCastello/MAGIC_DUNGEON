@@ -22,19 +22,24 @@ struct t_screen {
 			tgl.print_tiled(" ", x, rows - 1);
 		}
 	}
-	void print_pause(string msg)
+	void print_bottom(string msg1, string msg2)
 	{
-		int timer = 100;
+		clear_bottom_text();
+		tgl.print_tiled(msg1, 0, rows - 2);
+		tgl.print_tiled(msg2, 0, rows - 1);
+	}
+	void print_pause(string msg, int timer = 100)
+	{
 		while (tgl.running() && timer > 0) {
 			clear_bottom_text();
-			tgl.print_tiled(msg, 0, rows - 1);
+			tgl.print_tiled(msg, 0, rows - 2);
 			tgl.system();
 			timer--;
 		}
 	}
 	bool confirm(string msg)
 	{
-		return confirm("", msg);
+		return confirm(msg, "");
 	}
 	bool confirm(string msg1, string msg2)
 	{
@@ -59,5 +64,71 @@ struct t_screen {
 			}
 		}
 		return confirmed;
+	}
+	rgb inc_color_r(rgb color, int amount = 0x10)
+	{
+		int red = (color >> 16) & 0xff;
+		int green = (color >> 8) & 0xff;
+		int blue = color & 0xff;
+		red += amount;
+		if (red > 0xff) {
+			red = 0;
+		}
+		return (red << 16) | (green << 8) | blue;
+	}
+	rgb inc_color_g(rgb color, int amount = 0x10)
+	{
+		int red = (color >> 16) & 0xff;
+		int green = (color >> 8) & 0xff;
+		int blue = color & 0xff;
+		green += amount;
+		if (green > 0xff) {
+			green = 0;
+		}
+		return (red << 16) | (green << 8) | blue;
+	}
+	rgb inc_color_b(rgb color, int amount = 0x10)
+	{
+		int red = (color >> 16) & 0xff;
+		int green = (color >> 8) & 0xff;
+		int blue = color & 0xff;
+		blue += amount;
+		if (blue > 0xff) {
+			blue = 0;
+		}
+		return (red << 16) | (green << 8) | blue;
+	}
+	rgb dec_color_r(rgb color, int amount = -0x10)
+	{
+		int red = (color >> 16) & 0xff;
+		int green = (color >> 8) & 0xff;
+		int blue = color & 0xff;
+		red += amount;
+		if (red < 0x00) {
+			red = 0xff;
+		}
+		return (red << 16) | (green << 8) | blue;
+	}
+	rgb dec_color_g(rgb color, int amount = -0x10)
+	{
+		int red = (color >> 16) & 0xff;
+		int green = (color >> 8) & 0xff;
+		int blue = color & 0xff;
+		green += amount;
+		if (green < 0x00) {
+			green = 0xff;
+		}
+		return (red << 16) | (green << 8) | blue;
+	}
+	rgb dec_color_b(rgb color, int amount = -0x10)
+	{
+		int red = (color >> 16) & 0xff;
+		int green = (color >> 8) & 0xff;
+		int blue = color & 0xff;
+		blue += amount;
+		if (blue < 0x00) {
+			blue = 0xff;
+		}
+		return (red << 16) | (green << 8) | blue;
 	}
 };

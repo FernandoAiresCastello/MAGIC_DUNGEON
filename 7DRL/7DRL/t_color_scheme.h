@@ -15,6 +15,9 @@ struct t_color_scheme {
 		{ 0x30ff50, 0x101010 }, // green-black
 		{ 0xff4040, 0x101010 }, // red-black
 	};
+	vector<pair<rgb, rgb>> user_presets = {
+
+	};
 	vector<pair<rgb, rgb>> old_presets = {
 		// purple backgrounds
 		{ 0x1010a0, 0x902080 }, // blue-purple

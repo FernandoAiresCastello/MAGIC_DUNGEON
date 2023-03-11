@@ -48,7 +48,7 @@ void t_player::move(int dx, int dy)
 
 	if (is_oob(newx, newy)) {
 		tgl.play_notes("l30o3ccc");
-		screen->print_pause("   Out of bounds    ");
+		screen->print_pause("    Out of bounds");
 	} else if (enemy_detected != nullptr) {
 		bool chance = tgl.rnd(0, 100) > 10;
 		if (chance) {
@@ -150,8 +150,9 @@ void t_player::trigger_collisions()
 void t_player::receive_damage(int damage)
 {
 	life -= damage;
-	if (life < 0) {
+	if (life <= 0) {
 		life = 0;
+		game->game_over();
 	}
 }
 void t_player::hurt_by_bomb()

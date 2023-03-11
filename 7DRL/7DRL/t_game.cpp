@@ -293,7 +293,11 @@ void t_game::draw_location(int mapx, int mapy, int scrx, int scry)
 	}
 
 	if (loc.entity == t_object::player) {
-		tgl.draw_tiled("player", scrx, scry);
+		if (player->get_life() > 0) {
+			tgl.draw_tiled("player", scrx, scry);
+		} else {
+			tgl.draw_tiled("tombstone", scrx, scry);
+		}
 
 	} else if (player->bomb.is_active() && player->bomb.get_x() == mapx && player->bomb.get_y() == mapy) {
 		tgl.draw_tiled("bomb", scrx, scry);
@@ -343,8 +347,6 @@ void t_game::draw_current_floor()
 		scry++;
 		scrx = 0;
 	}
-
-	draw_enemies();
 }
 void t_game::draw_info()
 {
@@ -369,7 +371,7 @@ void t_game::draw_info()
 
 	// bottom 2
 	y = screen->rows - 1;
-	tgl.print_tiled(tgl.fmt("lv:%i xp:%i/%i",
+	tgl.print_tiled(tgl.fmt("LV:%i XP:%i/%i",
 		player->get_exp_level(), player->get_exp(), player->get_max_exp()), 1, y);
 }
 void t_game::sync_player()
@@ -402,6 +404,7 @@ void t_game::load_sounds()
 	tgl.sound_load("shop", "sound/shop.wav");
 	tgl.sound_load("level_up", "sound/level_up.wav");
 	tgl.sound_load("exit", "sound/exit.wav");
+	tgl.sound_load("game_over", "sound/game_over.wav");
 }
 void t_game::draw_floor_intro()
 {
@@ -485,30 +488,35 @@ void t_game::game_loop()
 	sync_player();
 	visit_surroundings();
 
-	tgl.clear();
-		draw_current_floor();
-		draw_info();
+	redraw_screen();
 	tgl.system();
 
-	tick_bomb_timers();
 	process_input();
+	tick_bomb_timers();
+}
+void t_game::redraw_screen()
+{
+	tgl.clear();
+	draw_current_floor();
+	draw_enemies();
+	draw_info();
 }
 void t_game::process_input()
 {
 	int key = tgl.kb_lastkey();
 
 	// player actions
-	if (key == SDLK_RIGHT || key == SDLK_d || key == SDLK_KP_6)
+	if (key == SDLK_RIGHT || key == SDLK_d)
 		player->move(1, 0);
-	else if (key == SDLK_LEFT || key == SDLK_a || key == SDLK_KP_4)
+	else if (key == SDLK_LEFT || key == SDLK_a)
 		player->move(-1, 0);
-	else if (key == SDLK_DOWN || key == SDLK_s || key == SDLK_KP_2)
+	else if (key == SDLK_DOWN || key == SDLK_s)
 		player->move(0, 1);
-	else if (key == SDLK_UP || key == SDLK_w || key == SDLK_KP_8)
+	else if (key == SDLK_UP || key == SDLK_w)
 		player->move(0, -1);
-	else if (key == SDLK_PERIOD || key == SDLK_RETURN || key == SDLK_KP_ENTER)
+	else if (key == SDLK_PERIOD || key == SDLK_RETURN)
 		player->move(0, 0);
-	else if (key == SDLK_SPACE || key == SDLK_KP_5)
+	else if (key == SDLK_SPACE)
 		player->drop_bomb();
 	// special
 	else if (key == SDLK_ESCAPE)
@@ -521,4 +529,80 @@ void t_game::process_input()
 		player->gain_exp(100);
 	else if (key == SDLK_F5)
 		confirm_goto_next_floor();
+	else if (key == SDLK_F6)
+		change_colors();
+}
+void t_game::change_colors()
+{
+	const int sel_fg = 0;
+	const int sel_bg = 1;
+	int sel = sel_fg;
+
+	bool finished = false;
+	while (tgl.running() && !finished) {
+		if (sel == sel_fg) {
+			screen->print_bottom(
+				tgl.fmt(" >F: %06X   (QWE)", cur_floor->forecolor),
+				tgl.fmt("  B: %06X   (ASD)", cur_floor->backcolor));
+		} else if (sel == sel_bg) {
+			screen->print_bottom(
+				tgl.fmt("  F: %06X   (QWE)", cur_floor->forecolor),
+				tgl.fmt(" >B: %06X   (ASD)", cur_floor->backcolor));
+		}
+		tgl.system();
+		int key = tgl.kb_lastkey();
+		if (key == SDLK_F6 || key == SDLK_ESCAPE || key == SDLK_RETURN) {
+			finished = true;
+		} else if (key == SDLK_DOWN) {
+			sel = sel_bg;
+		} else if (key == SDLK_UP) {
+			sel = sel_fg;
+		} else if (key == SDLK_TAB) {
+
+			screen->color_scheme.user_presets.push_back({ cur_floor->forecolor, cur_floor->backcolor });
+			screen->print_pause(" Color scheme saved ");
+			string file_output = "";
+			for (auto& preset : screen->color_scheme.user_presets) {
+				file_output += tgl.fmt("0x%06x,0x%06x", preset.first, preset.second) + "\n";
+			}
+			tgl.file_csave("color_schemes.txt", file_output);
+
+		} else if (key == SDLK_q) { // R+
+			if (sel == sel_fg) cur_floor->forecolor = screen->inc_color_r(cur_floor->forecolor);
+			else if (sel == sel_bg) cur_floor->backcolor = screen->inc_color_r(cur_floor->backcolor);
+		} else if (key == SDLK_w) { // G+
+			if (sel == sel_fg) cur_floor->forecolor = screen->inc_color_g(cur_floor->forecolor);
+			else if (sel == sel_bg) cur_floor->backcolor = screen->inc_color_g(cur_floor->backcolor);
+		} else if (key == SDLK_e) { // B+
+			if (sel == sel_fg) cur_floor->forecolor = screen->inc_color_b(cur_floor->forecolor);
+			else if (sel == sel_bg) cur_floor->backcolor = screen->inc_color_b(cur_floor->backcolor);
+		} else if (key == SDLK_a) { // R-
+			if (sel == sel_fg) cur_floor->forecolor = screen->dec_color_r(cur_floor->forecolor);
+			else if (sel == sel_bg) cur_floor->backcolor = screen->dec_color_r(cur_floor->backcolor);
+		} else if (key == SDLK_s) { // G-
+			if (sel == sel_fg) cur_floor->forecolor = screen->dec_color_g(cur_floor->forecolor);
+			else if (sel == sel_bg) cur_floor->backcolor = screen->dec_color_g(cur_floor->backcolor);
+		} else if (key == SDLK_d) { // B-
+			if (sel == sel_fg) cur_floor->forecolor = screen->dec_color_b(cur_floor->forecolor);
+			else if (sel == sel_bg) cur_floor->backcolor = screen->dec_color_b(cur_floor->backcolor);
+		}
+		redraw_screen();
+	}
+}
+void t_game::game_over()
+{
+	save_hiscores();
+	redraw_screen();
+	tgl.pause(200);
+	tgl.sound("game_over");
+	screen->print_pause(" *** GAME  OVER ***", 1400);
+	tgl.exit();
+}
+void t_game::save_hiscores()
+{
+	string score = tgl.fmt("FLOOR %i / LEVEL %i / COINS %i", 
+		player->get_floor(), player->get_exp_level(), player->get_coins());
+
+	string line = "[" + tgl.datetime() + "] " + score;
+	tgl.file_appendln("hi_scores.txt", line);
 }

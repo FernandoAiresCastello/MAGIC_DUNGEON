@@ -22,6 +22,7 @@ struct t_game {
 	t_enemy* enemy_at(int x, int y);
 	t_enemy* get_random_enemy_around_player();
 	void confirm_goto_next_floor();
+	void game_over();
 
 private:
 	t_screen* screen = nullptr;
@@ -53,5 +54,8 @@ private:
 	void tick_bomb_timers();
 	void move_enemies();
 	void game_loop();
+	void redraw_screen();
 	void process_input();
+	void change_colors();
+	void save_hiscores();
 };

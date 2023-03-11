@@ -171,6 +171,18 @@ struct t_tileset {
 		);
 		tgl.tile_add("unvisited", "unvisited");
 
+		tgl.tile_new("tombstone",
+			"00011000"
+			"00011000"
+			"01111110"
+			"01111110"
+			"00011000"
+			"00011000"
+			"00011000"
+			"00000000"
+		);
+		tgl.tile_add("tombstone", "tombstone");
+
 		tgl.tile_new("shop_1",
 			"00111100"
 			"01000010"
