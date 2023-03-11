@@ -129,6 +129,10 @@ void t_player::destroy_walls_around()
 	cur_floor->set_obj(t_object::ground, x + 0, y + 1);
 	cur_floor->set_obj(t_object::ground, x + 1, y + 1);
 }
+void t_player::set_initial_floor(int number)
+{
+	floor_nr = number;
+}
 void t_player::next_floor()
 {
 	floor_nr++;

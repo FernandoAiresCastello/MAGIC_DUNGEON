@@ -17,12 +17,12 @@ t_game::~t_game()
 }
 void t_game::init()
 {
-	load_config();
-
 	screen = new t_screen();
 	view = &screen->view;
 	cur_floor = new t_floor();
 	player = new t_player(this, cur_floor, screen);
+
+	load_config();
 
 	tgl.window_gbc(0x000000, 5);
 	tgl.title(GAME_TITLE);
@@ -52,6 +52,8 @@ void t_game::load_config()
 
 		if (cfg == "debug" && value == "true") {
 			debug_mode = true;
+		} else if (cfg == "initial_floor") {
+			player->set_initial_floor(tgl.to_int(value) - 1);
 		}
 	}
 }
@@ -493,6 +495,9 @@ void t_game::show_floor_intro()
 }
 void t_game::goto_next_floor()
 {
+	tgl.sound_stop();
+	tgl.sound_await("exit");
+
 	player->next_floor();
 	if (player->get_floor() > max_floors) {
 		game_complete();
@@ -514,7 +519,6 @@ void t_game::goto_next_floor()
 void t_game::confirm_goto_next_floor()
 {
 	if (screen->confirm("   Descend? (Y/N)   ")) {
-		tgl.sound_await("exit");
 		goto_next_floor();
 	}
 }
@@ -662,6 +666,7 @@ void t_game::game_over()
 {
 	redraw_screen();
 	save_hiscores();
+	tgl.sound_stop();
 	tgl.pause(200);
 	tgl.sound("game_over");
 	screen->print_pause(" *** GAME  OVER ***", 1400);
@@ -685,8 +690,10 @@ void t_game::save_hiscores()
 void t_game::game_complete()
 {
 	save_hiscores();
+	tgl.sound_stop();
 
-	rgb forecolor = 0xffffff;
+	const rgb white = 0xe0e0e0;
+	rgb forecolor = white;
 	rgb backcolor = 0x101010;
 	tgl.backcolor(backcolor);
 
@@ -699,6 +706,16 @@ void t_game::game_complete()
 
 	tgl.sound("ending");
 
+	string info = "                            "
+		"~ Congratulations! ~"
+		"                    "
+		"Whoa!!! You have finally reached the warp zone beyond the last floor of the Magic Dungeon. "
+		"You will now be safely teleported home, with all " + tgl.to_string(player->get_coins()) + " coins "
+		"that you've collected in your adventure. Yay! Such rich! Many moneys! Very luxurious! WOW!"
+		"                    "
+		"~ Goodbye! ~";
+	
+	int info_offset = 0;
 	int counter_color_chg = 0;
 	while (tgl.running()) {
 		counter_color_chg++;
@@ -707,6 +724,11 @@ void t_game::game_complete()
 			int color_preset = tgl.rnd(0, screen->color_scheme.user_presets.size() - 1);
 			forecolor = screen->color_scheme.user_presets[color_preset].first;
 			backcolor = screen->color_scheme.user_presets[color_preset].second;
+
+			info_offset++;
+			if (info_offset >= info.length()) {
+				info_offset = 0;
+			}
 		}
 		tgl.backcolor(backcolor);
 		tgl.clear();
@@ -715,6 +737,8 @@ void t_game::game_complete()
 		tgl.print_tiled("*** YOU WIN! ***", 2, 7);
 		tgl.print_tiled("   Thank you", 2, 9);
 		tgl.print_tiled("  for playing!", 2, 10);
+		tgl.font_color(white, backcolor);
+		tgl.print_tiled(info.substr(info_offset, 18), 1, 16);
 		tgl.system();
 	}
 }
@@ -767,10 +791,8 @@ void t_game::show_game_intro()
 	string info = "                            "
 		"~~~~~ Story: ~~~~~"
 		"                    "
-		"Legend has it that mountains of gold are hidden deep within the dark, long forgotten chambers of the Magic Dungeon. "
-		"                    "
+		"Legend has it that huge stashes of gold are hidden deep within the dark, long forgotten chambers of the Magic Dungeon. "
 		"Are you brave enough to venture forth and collect as much treasure as you can? "
-		"                    "
 		"Prepare yourself, as you enter these mystical ruins, armed with only a sword, shield, and some explosives. "
 		"Many fabled creatures and ingenious traps await inside each of the magically generated 50 underground floors. "
 		"In each floor you must search for the stairs that lead to the next level below. "
@@ -801,12 +823,31 @@ void t_game::show_game_intro()
 		tgl.clear();
 		tgl.font_transparent(false);
 		tgl.font_color(forecolor, backcolor);
+		tgl.color_binary(forecolor, backcolor);
+
 	//	tgl.print_tiled("                    ", 0, 0);
 		tgl.print_tiled("   Welcome to the   ", 0, 1);
 		tgl.print_tiled(" ~ MAGIC DUNGEON! ~ ", 0, 3);
-		tgl.print_tiled("   Push ENTER key   ", 0, 9);
+
+		int y = 9;
+
+		for (int i = 4; i <= 15; i++) {
+			tgl.draw_tiled("wall", i, y + 2);
+		}
+		tgl.draw_tiled("player", 5, y + 1);
+		tgl.draw_tiled("slime", 7, y + 1);
+		
+		tgl.draw_tiled("tower", 12, y);
+		tgl.draw_tiled("tower", 14, y);
+
+		tgl.draw_tiled("solid", 12, y + 1);
+		tgl.draw_tiled("stairs", 13, y + 1);
+		tgl.draw_tiled("solid", 14, y + 1);
+
+		tgl.print_tiled("   Push ENTER key   ", 0, 14);
 		tgl.font_color(white, backcolor);
 		tgl.print_tiled(info.substr(info_offset, 18), 1, 16);
+
 		tgl.system();
 		if (!tgl.kb_alt() && tgl.kb_lastkey() == SDLK_RETURN) return;
 		if (tgl.kb_esc()) tgl.exit();

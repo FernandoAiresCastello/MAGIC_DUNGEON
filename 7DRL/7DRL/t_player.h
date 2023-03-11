@@ -38,6 +38,7 @@ struct t_player {
 	void grab_coin(int count = 1);
 	void drop_bomb();
 	void destroy_walls_around();
+	void set_initial_floor(int number);
 	void next_floor();
 	void trigger_collisions();
 	void hurt_by_bomb();
@@ -59,7 +60,7 @@ private:
 	int y = 0;
 	int prevx = x;
 	int prevy = y;
-	int floor_nr = 10;
+	int floor_nr = 0;
 	const int max_life = 999;
 	int life = 100;
 	const int max_bombs = 99;
