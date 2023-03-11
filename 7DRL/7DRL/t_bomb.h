@@ -5,7 +5,6 @@ struct t_player;
 struct t_floor;
 
 struct t_bomb {
-
 	t_bomb(t_player* player, t_floor* cur_floor);
 
 	int get_x();
@@ -14,6 +13,7 @@ struct t_bomb {
 	void activate(int bx, int by);
 	void tick();
 	void detonate();
+	int get_damage();
 
 private:
 	int x = -1;

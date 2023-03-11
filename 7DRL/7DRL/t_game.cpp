@@ -28,7 +28,7 @@ void t_game::init()
 	screen->rows = tgl.rows();
 
 	t_tileset::init();
-	init_sounds();
+	load_sounds();
 	goto_next_floor();
 }
 void t_game::run()
@@ -40,6 +40,15 @@ void t_game::run()
 void t_game::enemy_turn()
 {
 	move_enemies();
+}
+t_enemy* t_game::enemy_at(int x, int y)
+{
+	for (auto& enemy : enemies) {
+		if (enemy.x == x && enemy.y == y && enemy.life > 0) {
+			return &enemy;
+		}
+	}
+	return nullptr;
 }
 int t_game::random_x()
 {
@@ -303,23 +312,28 @@ void t_game::clear_bottom_text()
 void t_game::draw_info()
 {
 	tgl.font_transparent(false);
+	tgl.tile_transparent(false);
 	tgl.font_color(cur_floor->forecolor, cur_floor->backcolor);
+	tgl.color_binary(cur_floor->forecolor, cur_floor->backcolor);
+
 	clear_top_text();
 	clear_bottom_text();
 
 	// top
 	int y = 0;
-	tgl.print_tiled(tgl.fmt("F%i E%iN%i %i%%",
+	tgl.print_tiled(tgl.fmt("F%i E%iN%i     %3i%%",
 		player->get_floor(), player->get_x(), player->get_y(), cur_floor->percent_visited), 1, y);
-	// bottom
-	y = screen->rows - 1;
+	// bottom 1
+	y = screen->rows - 2;
 	tgl.print_tiled(tgl.fmt("~%03i  %02i %8i",
 		player->get_life(), player->get_bombs(), player->get_coins()), 1, y);
-
-	tgl.tile_transparent(false);
-	tgl.color_binary(cur_floor->forecolor, cur_floor->backcolor);
 	tgl.draw_tiled("bomb", 6, y);
 	tgl.draw_tiled("collect", 18, y);
+
+	// bottom 2
+	y = screen->rows - 1;
+	tgl.print_tiled(tgl.fmt("xp:%i",
+		player->get_exp()), 1, y);
 }
 void t_game::sync_player()
 {
@@ -341,10 +355,13 @@ void t_game::visit_surroundings()
 	cur_floor->visit(x + 0, y + 1);
 	cur_floor->visit(x + 1, y + 1);
 }
-void t_game::init_sounds()
+void t_game::load_sounds()
 {
 	tgl.sound_load("explosion", "sound/bomb.wav");
 	tgl.sound_load("coin", "sound/coin.wav");
+	tgl.sound_load("slash", "sound/slash.wav");
+	tgl.sound_load("enemy_attack", "sound/enemy_attack.wav");
+	tgl.sound_load("enemy_killed", "sound/enemy_killed.wav");
 }
 void t_game::draw_floor_intro()
 {
@@ -419,18 +436,20 @@ void t_game::tick_bomb_timers()
 }
 void t_game::move_enemies()
 {
-	for (auto& e : enemies) {
-		if (e.life <= 0) continue;
+	for (auto& enemy : enemies) {
+		if (enemy.life <= 0) continue;
 		bool chance = tgl.rnd(0, 100) > 50;
 		if (!chance) continue;
 		int dx = tgl.rnd(-1, 1);
 		int dy = tgl.rnd(-1, 1);
-		int newx = e.x + dx;
-		int newy = e.y + dy;
+		int newx = enemy.x + dx;
+		int newy = enemy.y + dy;
 		t_object& o = cur_floor->get(newx, newy).obj;
-		if (o != t_object::wall && o != t_object::none) {
-			e.x += dx;
-			e.y += dy;
+		if (player->get_x() == newx && player->get_y() == newy) {
+			player->hurt_by_enemy(&enemy);
+		} else if (o != t_object::wall && o != t_object::none) {
+			enemy.x += dx;
+			enemy.y += dy;
 		}
 	}
 }

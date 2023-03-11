@@ -7,6 +7,7 @@
 struct t_game;
 struct t_floor;
 struct t_screen;
+struct t_enemy;
 
 struct t_player {
 	t_bomb bomb;
@@ -21,6 +22,7 @@ struct t_player {
 	int get_life();
 	int get_coins();
 	int get_bombs();
+	int get_exp();
 	void set_pos(int newx, int newy);
 	void move(int dx, int dy);
 	bool can_move_to(int newx, int newy);
@@ -32,8 +34,10 @@ struct t_player {
 	void drop_bomb();
 	void destroy_walls_around();
 	void next_floor();
-	void hurt_by_bomb();
 	void trigger_collisions();
+	void hurt_by_bomb();
+	void hurt_by_enemy(t_enemy* enemy);
+	void attack_enemy(t_enemy* enemy);
 
 private:
 	t_game* game = nullptr;
@@ -44,8 +48,14 @@ private:
 	int y = 0;
 	int prevx = x;
 	int prevy = y;
-	int life = 100;
-	int coins = 0;
-	int bombs = 10;
 	int floor_nr = 0;
+	const int max_life = 100;
+	int life = max_life;
+	const int max_bombs = 10;
+	int bombs = max_bombs;
+	int coins = 0;
+	int power = 1;
+	int exp = 0;
+
+	void receive_damage(int damage);
 };

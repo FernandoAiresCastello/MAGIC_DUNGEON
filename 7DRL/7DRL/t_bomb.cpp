@@ -55,7 +55,25 @@ void t_bomb::detonate()
 	cur_floor->detonate_wall(x + 0, y + 1);
 	cur_floor->detonate_wall(x + 1, y + 1);
 
-	if (cur_floor->get(x, y).entity == t_object::player) {
+	int px = player->get_x();
+	int py = player->get_y();
+
+	bool player_detected =
+		(x - 1 == px && y - 1 == py) ||
+		(x + 0 == px && y - 1 == py) ||
+		(x + 1 == px && y - 1 == py) ||
+		(x - 1 == px && y == py) ||
+		(x == px && y == py) ||
+		(x + 1 == px && y == py) ||
+		(x - 1 == px && y + 1 == py) ||
+		(x + 0 == px && y + 1 == py) ||
+		(x + 1 == px && y + 1 == py);
+
+	if (player_detected) {
 		player->hurt_by_bomb();
 	}
+}
+int t_bomb::get_damage()
+{
+	return tgl.rnd(40, 60);
 }

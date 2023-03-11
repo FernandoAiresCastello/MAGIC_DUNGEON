@@ -8,12 +8,14 @@ struct t_floor;
 struct t_player;
 
 struct t_game {
+	vector<t_enemy> enemies;
 
 	t_game();
 	~t_game();
 
 	void run();
 	void enemy_turn();
+	t_enemy* enemy_at(int x, int y);
 	void confirm_goto_next_floor();
 
 private:
@@ -21,7 +23,6 @@ private:
 	t_view* view = nullptr;
 	t_floor* cur_floor = nullptr;
 	t_player* player = nullptr;
-	vector<t_enemy> enemies;
 
 	void init();
 	int random_x();
@@ -42,7 +43,7 @@ private:
 	void draw_info();
 	void sync_player();
 	void visit_surroundings();
-	void init_sounds();
+	void load_sounds();
 	void draw_floor_intro();
 	void goto_next_floor();
 	void tick_bomb_timers();
