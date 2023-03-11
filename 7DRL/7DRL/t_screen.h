@@ -9,6 +9,10 @@ struct t_screen {
 	t_view view;
 	t_color_scheme color_scheme;
 
+	void clear()
+	{
+		tgl.clear();
+	}
 	void clear_top_text()
 	{
 		for (int x = 0; x < cols; x++) {

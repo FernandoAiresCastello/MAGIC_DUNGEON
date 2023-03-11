@@ -30,4 +30,7 @@
   <ItemGroup>
     <ResourceCompile Include="7DRL.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\Images\icon.ico" />
+  </ItemGroup>
 </Project>

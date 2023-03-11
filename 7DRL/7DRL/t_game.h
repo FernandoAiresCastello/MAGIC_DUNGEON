@@ -9,6 +9,7 @@ struct t_floor;
 struct t_player;
 
 struct t_game {
+	const int max_floors = 50;
 	vector<t_enemy> enemies;
 	t_shop life_shop;
 	t_shop bomb_shop;
@@ -23,6 +24,7 @@ struct t_game {
 	t_enemy* get_random_enemy_around_player();
 	void confirm_goto_next_floor();
 	void game_over();
+	void game_complete();
 
 private:
 	bool debug_mode = false;
@@ -51,7 +53,7 @@ private:
 	void sync_player();
 	void visit_surroundings();
 	void load_sounds();
-	void draw_floor_intro();
+	void show_floor_intro();
 	void goto_next_floor();
 	void tick_bomb_timers();
 	void move_enemies();
@@ -60,4 +62,5 @@ private:
 	void process_input();
 	void change_colors();
 	void save_hiscores();
+	void show_game_intro();
 };

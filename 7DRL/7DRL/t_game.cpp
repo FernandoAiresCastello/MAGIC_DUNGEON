@@ -25,6 +25,7 @@ void t_game::init()
 	player = new t_player(this, cur_floor, screen);
 
 	tgl.window_gbc(0x000000, 5);
+	tgl.title(GAME_TITLE);
 	tgl.mouse(false);
 	screen->cols = tgl.cols();
 	screen->rows = tgl.rows();
@@ -33,6 +34,7 @@ void t_game::init()
 	load_sounds();
 	screen->color_scheme.load();
 
+	show_game_intro();
 	goto_next_floor();
 }
 void t_game::load_config()
@@ -121,7 +123,17 @@ t_enemy t_game::generate_enemy()
 	e.life = player->get_floor();
 	e.attack = player->get_floor();
 
-	int type = tgl.rnd(0, 2);
+	int type = -1;
+	
+	if (player->get_floor() == 1)
+		type = 0;
+	else if (player->get_floor() <= 5)
+		type = tgl.rnd(0, 1);
+	else if (player->get_floor() < 10)
+		type = tgl.rnd(0, 2);
+	else
+		type = tgl.rnd(0, 3);
+
 	if (type == 0) {
 		e.tile = "slime";
 		e.life += tgl.rnd(1, 3);
@@ -131,9 +143,13 @@ t_enemy t_game::generate_enemy()
 		e.life += tgl.rnd(3, 5);
 		e.attack += tgl.rnd(1, 5);
 	} else if (type == 2) {
-		e.tile = "ghost";
+		e.tile = "skelet";
 		e.life += tgl.rnd(10, 20);
 		e.attack += tgl.rnd(10, 20);
+	} else if (type == 3) {
+		e.tile = "ghost";
+		e.life += tgl.rnd(20, 50);
+		e.attack += tgl.rnd(20, 50);
 	}
 
 	return e;
@@ -394,7 +410,7 @@ void t_game::draw_info()
 
 	// top
 	int y = 0;
-	tgl.print_tiled(tgl.fmt("F%i E%iN%i     %3i%%",
+	tgl.print_tiled(tgl.fmt("F%i E%iN%i   %3i%%",
 		player->get_floor(), player->get_x(), player->get_y(), cur_floor->percent_visited), 1, y);
 	// bottom 1
 	y = screen->rows - 2;
@@ -434,6 +450,7 @@ void t_game::visit_surroundings()
 }
 void t_game::load_sounds()
 {
+	tgl.sound_load("intro", "sound/intro.wav");
 	tgl.sound_load("explosion", "sound/bomb.wav");
 	tgl.sound_load("coin", "sound/coin.wav");
 	tgl.sound_load("slash", "sound/slash.wav");
@@ -443,13 +460,15 @@ void t_game::load_sounds()
 	tgl.sound_load("level_up", "sound/level_up.wav");
 	tgl.sound_load("exit", "sound/exit.wav");
 	tgl.sound_load("game_over", "sound/game_over.wav");
+	tgl.sound_load("ending", "sound/ending.wav");
 }
-void t_game::draw_floor_intro()
+void t_game::show_floor_intro()
 {
 	const rgb forecolor = 0xffffff;
 	const rgb backcolor = 0x101010;
 
 	tgl.backcolor(backcolor);
+	tgl.sound_stop();
 
 	int timer = 100;
 	while (tgl.running() && timer > 0) {
@@ -469,10 +488,16 @@ void t_game::draw_floor_intro()
 		tgl.system();
 		timer--;
 	}
+
+	tgl.sound("intro");
 }
 void t_game::goto_next_floor()
 {
 	player->next_floor();
+	if (player->get_floor() > max_floors) {
+		game_complete();
+		return;
+	}
 
 	int player_x = random_x();
 	int player_y = random_y();
@@ -484,12 +509,12 @@ void t_game::goto_next_floor()
 
 	view->setscrl(player_x - screen->cols / 2 + 1, player_y - screen->rows / 2 + 1);
 
-	draw_floor_intro();
+	show_floor_intro();
 }
 void t_game::confirm_goto_next_floor()
 {
 	if (screen->confirm("   Descend? (Y/N)   ")) {
-		tgl.sound("exit");
+		tgl.sound_await("exit");
 		goto_next_floor();
 	}
 }
@@ -644,9 +669,146 @@ void t_game::game_over()
 }
 void t_game::save_hiscores()
 {
-	string score = tgl.fmt("FLOOR %i / LEVEL %i / COINS %i", 
-		player->get_floor(), player->get_exp_level(), player->get_coins());
-
+	bool game_completed = false;
+	int floor_nr = player->get_floor();
+	if (floor_nr >= max_floors) {
+		floor_nr = max_floors;
+		game_completed = true;
+	}
+	string score = tgl.fmt("FLOOR %i / LEVEL %i / COINS %i", floor_nr, player->get_exp_level(), player->get_coins());
+	if (game_completed) {
+		score += " / GAME COMPLETED!";
+	}
 	string line = "[" + tgl.datetime() + "] " + score;
 	tgl.file_appendln("hi_scores.txt", line);
+}
+void t_game::game_complete()
+{
+	save_hiscores();
+
+	rgb forecolor = 0xffffff;
+	rgb backcolor = 0x101010;
+	tgl.backcolor(backcolor);
+
+	int timer = 200;
+	while (tgl.running() && timer > 0) {
+		tgl.clear();
+		tgl.system();
+		timer--;
+	}
+
+	tgl.sound("ending");
+
+	int counter_color_chg = 0;
+	while (tgl.running()) {
+		counter_color_chg++;
+		if (counter_color_chg > 5) {
+			counter_color_chg = 0;
+			int color_preset = tgl.rnd(0, screen->color_scheme.user_presets.size() - 1);
+			forecolor = screen->color_scheme.user_presets[color_preset].first;
+			backcolor = screen->color_scheme.user_presets[color_preset].second;
+		}
+		tgl.backcolor(backcolor);
+		tgl.clear();
+		tgl.font_transparent(false);
+		tgl.font_color(forecolor, backcolor);
+		tgl.print_tiled("*** YOU WIN! ***", 2, 7);
+		tgl.print_tiled("   Thank you", 2, 9);
+		tgl.print_tiled("  for playing!", 2, 10);
+		tgl.system();
+	}
+}
+void t_game::show_game_intro()
+{
+	tgl.play_notes("l60o7abababbbb");
+
+	const rgb white = 0xe0e0e0;
+	rgb forecolor = white;
+	rgb backcolor = 0x101010;
+	tgl.backcolor(backcolor);
+	tgl.font_transparent(false);
+	tgl.font_color(white, backcolor);
+
+	int timer = 300;
+	while (tgl.running() && timer > 0) {
+		tgl.clear();
+	//	tgl.print_tiled("                    ", 0, 0);
+		tgl.print_tiled("    Developed by    ", 0, 6);
+		tgl.print_tiled("Fernando A. Castello", 0, 8);
+		tgl.print_tiled("      (C) 2023      ", 0, 10);
+		tgl.system();
+		timer--;
+		if (tgl.kb_lastkey() == SDLK_RETURN) break;
+	}
+	timer = 300;
+	while (tgl.running() && timer > 0) {
+		tgl.clear();
+	//	tgl.print_tiled("                    ", 0, 0);
+		tgl.print_tiled("   Made in 7 days   ", 0, 6);
+		tgl.print_tiled("   for the annual   ", 0, 8);
+		tgl.print_tiled("   7DRL challenge   ", 0, 10);
+		tgl.system();
+		timer--;
+		if (tgl.kb_lastkey() == SDLK_RETURN) break;
+	}
+	timer = 300;
+	while (tgl.running() && timer > 0) {
+		tgl.clear();
+	//	tgl.print_tiled("                    ", 0, 0);
+		tgl.print_tiled("     Powered by     ", 0, 7);
+		tgl.print_tiled(" TileGameLib  (TGL) ", 0, 9);
+		tgl.system();
+		timer--;
+		if (tgl.kb_lastkey() == SDLK_RETURN) break;
+	}
+
+	tgl.sound("intro");
+
+	string info = "                            "
+		"~~~~~ Story: ~~~~~"
+		"                    "
+		"Legend has it that mountains of gold are hidden deep within the dark, long forgotten chambers of the Magic Dungeon. "
+		"                    "
+		"Are you brave enough to venture forth and collect as much treasure as you can? "
+		"                    "
+		"Prepare yourself, as you enter these mystical ruins, armed with only a sword, shield, and some explosives. "
+		"Many fabled creatures and ingenious traps await inside each of the magically generated 50 underground floors. "
+		"In each floor you must search for the stairs that lead to the next level below. "
+		"Once you enter the dungeon, there are only two ways out: reaching the warp zone in the 50th floor, or dying. "
+		"Some say that the spirits of ancient merchants still haunt these labyrinths, offering life energy, explosives and maps, "
+		"in exchange for some of your precious treasure. Finding them will surely aid you in your quest... "
+		"                    "
+		"Good luck!";
+
+	int info_offset = 0;
+	int counter_color_chg = 0;
+	while (tgl.running()) {
+		counter_color_chg++;
+		if (counter_color_chg > 5) {
+			do {
+				counter_color_chg = 0;
+				int color_preset = tgl.rnd(0, screen->color_scheme.user_presets.size() - 1);
+				forecolor = screen->color_scheme.user_presets[color_preset].first;
+			}
+			while (forecolor == 0x000000 || forecolor == 0x101010 || forecolor == 0x202020);
+			
+			info_offset++;
+			if (info_offset >= info.length()) {
+				info_offset = 0;
+			}
+		}
+		tgl.backcolor(backcolor);
+		tgl.clear();
+		tgl.font_transparent(false);
+		tgl.font_color(forecolor, backcolor);
+	//	tgl.print_tiled("                    ", 0, 0);
+		tgl.print_tiled("   Welcome to the   ", 0, 1);
+		tgl.print_tiled(" ~ MAGIC DUNGEON! ~ ", 0, 3);
+		tgl.print_tiled("   Push ENTER key   ", 0, 9);
+		tgl.font_color(white, backcolor);
+		tgl.print_tiled(info.substr(info_offset, 18), 1, 16);
+		tgl.system();
+		if (!tgl.kb_alt() && tgl.kb_lastkey() == SDLK_RETURN) return;
+		if (tgl.kb_esc()) tgl.exit();
+	}
 }

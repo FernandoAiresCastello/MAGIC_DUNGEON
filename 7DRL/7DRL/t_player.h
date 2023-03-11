@@ -59,7 +59,7 @@ private:
 	int y = 0;
 	int prevx = x;
 	int prevy = y;
-	int floor_nr = 0;
+	int floor_nr = 10;
 	const int max_life = 999;
 	int life = 100;
 	const int max_bombs = 99;
