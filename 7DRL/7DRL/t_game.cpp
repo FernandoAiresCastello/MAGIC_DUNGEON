@@ -29,6 +29,7 @@ void t_game::init()
 
 	t_tileset::init();
 	load_sounds();
+
 	goto_next_floor();
 }
 void t_game::run()
@@ -85,11 +86,22 @@ int t_game::random_y()
 {
 	return tgl.rnd(1, cur_floor->height - 2);
 }
+void t_game::generate_shops()
+{
+	life_shop.spawn(t_shoptype::life, cur_floor, random_x(), random_y());
+	bomb_shop.spawn(t_shoptype::bomb, cur_floor, random_x(), random_y());
+	map_shop.spawn(t_shoptype::map, cur_floor, random_x(), random_y());
+}
 t_enemy t_game::generate_enemy()
 {
 	t_enemy e;
+
+	e.tile = "spider";
 	e.x = random_x();
 	e.y = random_y();
+	e.life = player->get_floor() + tgl.rnd(0, 5);
+	e.attack = player->get_floor() + tgl.rnd(0, 3);
+
 	return e;
 }
 void t_game::generate_enemies()
@@ -234,6 +246,8 @@ void t_game::init_current_floor()
 	for (int i = 0; i < exit_count; i++) {
 		generate_exit(random_x(), random_y());
 	}
+	// shops
+	generate_shops();
 	// enemies
 	generate_enemies();
 }
@@ -283,6 +297,11 @@ void t_game::draw_location(int mapx, int mapy, int scrx, int scry)
 
 	} else if (player->bomb.is_active() && player->bomb.get_x() == mapx && player->bomb.get_y() == mapy) {
 		tgl.draw_tiled("bomb", scrx, scry);
+	} else if (
+		(bomb_shop.x == mapx && bomb_shop.y == mapy) ||
+		(life_shop.x == mapx && life_shop.y == mapy) ||
+		(map_shop.x == mapx && map_shop.y == mapy)) {
+		tgl.draw_tiled("shop", scrx, scry);
 
 	} else if (loc.obj == t_object::coin) {
 		tgl.draw_tiled("collect", scrx, scry);
@@ -327,19 +346,6 @@ void t_game::draw_current_floor()
 
 	draw_enemies();
 }
-void t_game::clear_top_text()
-{
-	for (int x = 0; x < screen->cols; x++) {
-		tgl.print_tiled(" ", x, 0);
-	}
-}
-void t_game::clear_bottom_text()
-{
-	for (int x = 0; x < screen->cols; x++) {
-		tgl.print_tiled(" ", x, screen->rows - 2);
-		tgl.print_tiled(" ", x, screen->rows - 1);
-	}
-}
 void t_game::draw_info()
 {
 	tgl.font_transparent(false);
@@ -347,8 +353,8 @@ void t_game::draw_info()
 	tgl.font_color(cur_floor->forecolor, cur_floor->backcolor);
 	tgl.color_binary(cur_floor->forecolor, cur_floor->backcolor);
 
-	clear_top_text();
-	clear_bottom_text();
+	screen->clear_top_text();
+	screen->clear_bottom_text();
 
 	// top
 	int y = 0;
@@ -363,8 +369,8 @@ void t_game::draw_info()
 
 	// bottom 2
 	y = screen->rows - 1;
-	tgl.print_tiled(tgl.fmt("xp:%i",
-		player->get_exp()), 1, y);
+	tgl.print_tiled(tgl.fmt("lv:%i xp:%i/%i",
+		player->get_exp_level(), player->get_exp(), player->get_max_exp()), 1, y);
 }
 void t_game::sync_player()
 {
@@ -393,6 +399,9 @@ void t_game::load_sounds()
 	tgl.sound_load("slash", "sound/slash.wav");
 	tgl.sound_load("enemy_attack", "sound/enemy_attack.wav");
 	tgl.sound_load("enemy_killed", "sound/enemy_killed.wav");
+	tgl.sound_load("shop", "sound/shop.wav");
+	tgl.sound_load("level_up", "sound/level_up.wav");
+	tgl.sound_load("exit", "sound/exit.wav");
 }
 void t_game::draw_floor_intro()
 {
@@ -410,7 +419,7 @@ void t_game::draw_floor_intro()
 
 	tgl.play_notes("l40o5cdedefefgggg");
 
-	timer = 300;
+	timer = 200;
 	while (tgl.running() && timer > 0) {
 		tgl.clear();
 		tgl.font_transparent(false);
@@ -438,26 +447,8 @@ void t_game::goto_next_floor()
 }
 void t_game::confirm_goto_next_floor()
 {
-	tgl.print_tiled("   Descend? (Y/N)   ", 0, screen->rows - 1);
-
-	bool finished = false;
-	bool confirmed = false;
-
-	int key = 0;
-
-	while (tgl.running() && !finished) {
-		tgl.system();
-		key = tgl.kb_lastkey();
-		if (key == SDLK_y) {
-			confirmed = true;
-			finished = true;
-		} else if (key == SDLK_n || key == SDLK_ESCAPE) {
-			confirmed = false;
-			finished = true;
-		}
-	}
-
-	if (confirmed) {
+	if (screen->confirm("   Descend? (Y/N)   ")) {
+		tgl.sound("exit");
 		goto_next_floor();
 	}
 }
@@ -491,34 +482,43 @@ void t_game::move_enemies()
 }
 void t_game::game_loop()
 {
+	sync_player();
+	visit_surroundings();
+
 	tgl.clear();
-		sync_player();
-		visit_surroundings();
 		draw_current_floor();
 		draw_info();
-		tick_bomb_timers();
 	tgl.system();
 
+	tick_bomb_timers();
+	process_input();
+}
+void t_game::process_input()
+{
 	int key = tgl.kb_lastkey();
 
 	// player actions
-	if (key == SDLK_RIGHT || key == SDLK_d || key == SDLK_KP_6) 
+	if (key == SDLK_RIGHT || key == SDLK_d || key == SDLK_KP_6)
 		player->move(1, 0);
-	else if (key == SDLK_LEFT || key == SDLK_a || key == SDLK_KP_4) 
+	else if (key == SDLK_LEFT || key == SDLK_a || key == SDLK_KP_4)
 		player->move(-1, 0);
-	else if (key == SDLK_DOWN || key == SDLK_s || key == SDLK_KP_2) 
+	else if (key == SDLK_DOWN || key == SDLK_s || key == SDLK_KP_2)
 		player->move(0, 1);
-	else if (key == SDLK_UP || key == SDLK_w || key == SDLK_KP_8) 
+	else if (key == SDLK_UP || key == SDLK_w || key == SDLK_KP_8)
 		player->move(0, -1);
-	else if (key == SDLK_PERIOD || key == SDLK_RETURN || key == SDLK_KP_ENTER) 
+	else if (key == SDLK_PERIOD || key == SDLK_RETURN || key == SDLK_KP_ENTER)
 		player->move(0, 0);
-	else if (key == SDLK_SPACE || key == SDLK_KP_5) 
+	else if (key == SDLK_SPACE || key == SDLK_KP_5)
 		player->drop_bomb();
 	// special
 	else if (key == SDLK_ESCAPE)
 		tgl.exit();
-	else if (key == SDLK_F2) 
+	else if (key == SDLK_F2)
 		randomize_color_scheme();
-	else if (key == SDLK_F3) 
+	else if (key == SDLK_F3)
+		player->grab_coin(100);
+	else if (key == SDLK_F4)
+		player->gain_exp(100);
+	else if (key == SDLK_F5)
 		confirm_goto_next_floor();
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "t_game.h"
 #include "t_enemy.h"
+#include "t_shop.h"
 
 struct t_screen;
 struct t_view;
@@ -9,6 +10,9 @@ struct t_player;
 
 struct t_game {
 	vector<t_enemy> enemies;
+	t_shop life_shop;
+	t_shop bomb_shop;
+	t_shop map_shop;
 
 	t_game();
 	~t_game();
@@ -29,6 +33,7 @@ private:
 	int random_x();
 	int random_y();
 	t_enemy generate_enemy();
+	void generate_shops();
 	void generate_enemies();
 	void generate_exit(int x, int y);
 	void generate_room(int x, int y, int w, int h);
@@ -39,8 +44,6 @@ private:
 	void draw_enemies();
 	void draw_location(int mapx, int mapy, int scrx, int scry);
 	void draw_current_floor();
-	void clear_top_text();
-	void clear_bottom_text();
 	void draw_info();
 	void sync_player();
 	void visit_surroundings();
@@ -50,4 +53,5 @@ private:
 	void tick_bomb_timers();
 	void move_enemies();
 	void game_loop();
+	void process_input();
 };

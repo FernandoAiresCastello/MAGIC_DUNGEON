@@ -3,6 +3,7 @@
 #include "t_direction.h"
 #include "t_location.h"
 #include "t_bomb.h"
+#include "t_shop.h"
 
 struct t_game;
 struct t_floor;
@@ -23,14 +24,18 @@ struct t_player {
 	int get_coins();
 	int get_bombs();
 	int get_exp();
+	int get_max_exp();
+	int get_exp_level();
 	void set_pos(int newx, int newy);
 	void move(int dx, int dy);
 	bool can_move_to(int newx, int newy);
+	void step_back();
 	bool is_oob(int newx, int newy);
 	t_location& getloc();
 	bool is_on_stairs();
 	bool found_coin();
-	void grab_coin();
+	bool found_shop(t_shoptype type);
+	void grab_coin(int count = 1);
 	void drop_bomb();
 	void destroy_walls_around();
 	void next_floor();
@@ -38,6 +43,11 @@ struct t_player {
 	void hurt_by_bomb();
 	void hurt_by_enemy(t_enemy* enemy);
 	void attack_enemy(t_enemy* enemy);
+	bool spend_coins(int count);
+	void restore_life(int points);
+	void restore_bombs(int count);
+	void obtain_map();
+	void gain_exp(int points);
 
 private:
 	t_game* game = nullptr;
@@ -49,13 +59,15 @@ private:
 	int prevx = x;
 	int prevy = y;
 	int floor_nr = 0;
-	const int max_life = 100;
-	int life = max_life;
-	const int max_bombs = 10;
-	int bombs = max_bombs;
+	const int max_life = 999;
+	int life = 100;
+	const int max_bombs = 99;
+	int bombs = 10;
 	int coins = 0;
 	int power = 1;
 	int exp = 0;
+	const int max_exp = 100;
+	int exp_level = 1;
 
 	void receive_damage(int damage);
 };

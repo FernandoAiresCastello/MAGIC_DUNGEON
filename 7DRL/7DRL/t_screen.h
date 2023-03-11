@@ -8,4 +8,56 @@ struct t_screen {
 	int rows;
 	t_view view;
 	t_color_scheme color_scheme;
+
+	void clear_top_text()
+	{
+		for (int x = 0; x < cols; x++) {
+			tgl.print_tiled(" ", x, 0);
+		}
+	}
+	void clear_bottom_text()
+	{
+		for (int x = 0; x < cols; x++) {
+			tgl.print_tiled(" ", x, rows - 2);
+			tgl.print_tiled(" ", x, rows - 1);
+		}
+	}
+	void print_pause(string msg)
+	{
+		int timer = 100;
+		while (tgl.running() && timer > 0) {
+			clear_bottom_text();
+			tgl.print_tiled(msg, 0, rows - 1);
+			tgl.system();
+			timer--;
+		}
+	}
+	bool confirm(string msg)
+	{
+		return confirm("", msg);
+	}
+	bool confirm(string msg1, string msg2)
+	{
+		clear_bottom_text();
+		tgl.print_tiled(msg1, 0, rows - 2);
+		tgl.print_tiled(msg2, 0, rows - 1);
+
+		bool finished = false;
+		bool confirmed = false;
+
+		int key = 0;
+
+		while (tgl.running() && !finished) {
+			tgl.system();
+			key = tgl.kb_lastkey();
+			if (key == SDLK_y) {
+				confirmed = true;
+				finished = true;
+			} else if (key == SDLK_n || key == SDLK_ESCAPE) {
+				confirmed = false;
+				finished = true;
+			}
+		}
+		return confirmed;
+	}
 };

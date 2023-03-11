@@ -42,6 +42,14 @@ void t_floor::visit(int x, int y)
 		}
 	}
 }
+void t_floor::visit_all()
+{
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			visit(x, y);
+		}
+	}
+}
 void t_floor::unvisit(int x, int y)
 {
 	if (x >= 0 && y >= 0 && x < width && y < height) {

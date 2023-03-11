@@ -23,6 +23,8 @@ int t_player::get_life() { return life; }
 int t_player::get_coins() { return coins; }
 int t_player::get_bombs() { return bombs; }
 int t_player::get_exp() { return exp; }
+int t_player::get_max_exp() { return max_exp; }
+int t_player::get_exp_level() { return exp_level; }
 
 void t_player::set_pos(int newx, int newy)
 {
@@ -46,12 +48,7 @@ void t_player::move(int dx, int dy)
 
 	if (is_oob(newx, newy)) {
 		tgl.play_notes("l30o3ccc");
-		int timer = 100;
-		while (tgl.running() && timer > 0) {
-			tgl.print_tiled("   Out of bounds    ", 0, screen->rows - 1);
-			tgl.system();
-			timer--;
-		}
+		screen->print_pause("   Out of bounds    ");
 	} else if (enemy_detected != nullptr) {
 		bool chance = tgl.rnd(0, 100) > 10;
 		if (chance) {
@@ -74,6 +71,12 @@ bool t_player::can_move_to(int newx, int newy)
 
 	return o == t_object::ground || o == t_object::stairs || o == t_object::coin;
 }
+void t_player::step_back()
+{
+	x = prevx;
+	y = prevy;
+	screen->view.undo_last_scroll();
+}
 bool t_player::is_oob(int newx, int newy)
 {
 	return newx < 0 || newy < 0 || newx >= cur_floor->width || newy >= cur_floor->height;
@@ -86,13 +89,24 @@ bool t_player::is_on_stairs()
 {
 	return getloc().obj == t_object::stairs;
 }
+bool t_player::found_shop(t_shoptype type)
+{
+	if (type == t_shoptype::bomb) {
+		return x == game->bomb_shop.x && y == game->bomb_shop.y;
+	} else if (type == t_shoptype::life) {
+		return x == game->life_shop.x && y == game->life_shop.y;
+	} else if (type == t_shoptype::map) {
+		return x == game->map_shop.x && y == game->map_shop.y;
+	}
+	return false;
+}
 bool t_player::found_coin()
 {
 	return getloc().obj == t_object::coin;
 }
-void t_player::grab_coin()
+void t_player::grab_coin(int count)
 {
-	coins++;
+	coins += count;
 	tgl.sound("coin");
 	getloc().obj = t_object::ground;
 }
@@ -118,8 +132,6 @@ void t_player::destroy_walls_around()
 void t_player::next_floor()
 {
 	floor_nr++;
-	//bombs = max_bombs;
-	//life = max_life;
 }
 void t_player::trigger_collisions()
 {
@@ -127,12 +139,18 @@ void t_player::trigger_collisions()
 		game->confirm_goto_next_floor();
 	} else if (found_coin()) {
 		grab_coin();
+	} else if (found_shop(t_shoptype::life)) {
+		game->life_shop.sell(this, screen);
+	} else if (found_shop(t_shoptype::bomb)) {
+		game->bomb_shop.sell(this, screen);
+	} else if (found_shop(t_shoptype::map)) {
+		game->map_shop.sell(this, screen);
 	}
 }
 void t_player::receive_damage(int damage)
 {
 	life -= damage;
-	if (life <= 0) {
+	if (life < 0) {
 		life = 0;
 	}
 }
@@ -149,10 +167,47 @@ void t_player::attack_enemy(t_enemy* enemy)
 {
 	if (enemy->life > 0) {
 		tgl.sound("slash");
-		enemy->life -= power;
+		enemy->life -= (power + (exp_level - 1));
 		if (enemy->life <= 0) {
 			tgl.sound("enemy_killed");
-			exp += enemy->exp;
+			gain_exp(enemy->exp);
 		}
+	}
+}
+bool t_player::spend_coins(int count)
+{
+	if (coins - count < 0) {
+		return false;
+	} else {
+		coins -= count;
+		return true;
+	}
+}
+void t_player::restore_life(int points)
+{
+	life += points;
+	if (life > max_life) {
+		life = max_life;
+	}
+}
+void t_player::restore_bombs(int count)
+{
+	bombs += count;
+	if (bombs > max_bombs) {
+		bombs = max_bombs;
+	}
+}
+void t_player::obtain_map()
+{
+	cur_floor->visit_all();
+}
+void t_player::gain_exp(int points)
+{
+	exp += points;
+	if (exp > max_exp) {
+		tgl.sound("level_up");
+		screen->print_pause("      Level up!");
+		exp_level++;
+		exp = 0;
 	}
 }

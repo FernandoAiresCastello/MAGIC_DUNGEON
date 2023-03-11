@@ -7,6 +7,7 @@
     <ClCompile Include="t_player.cpp" />
     <ClCompile Include="t_game.cpp" />
     <ClCompile Include="t_floor.cpp" />
+    <ClCompile Include="t_shop.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="t_player.h" />
@@ -23,5 +24,6 @@
     <ClInclude Include="t_screen.h" />
     <ClInclude Include="t_tileset.h" />
     <ClInclude Include="t_game.h" />
+    <ClInclude Include="t_shop.h" />
   </ItemGroup>
 </Project>

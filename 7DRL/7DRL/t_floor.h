@@ -18,6 +18,7 @@ struct t_floor {
 	void set_entity(t_object e, int x, int y);
 	void detonate_wall(int x, int y);
 	void visit(int x, int y);
+	void visit_all();
 	void unvisit(int x, int y);
 	bool visited(int x, int y);
 	void color(int fg, int bg);
