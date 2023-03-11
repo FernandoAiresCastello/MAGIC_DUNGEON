@@ -145,7 +145,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="global.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="t_bomb.cpp" />
+    <ClCompile Include="t_floor.cpp" />
+    <ClCompile Include="t_game.cpp" />
+    <ClCompile Include="t_player.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="t_game.h" />
+    <ClInclude Include="t_tileset.h" />
+    <ClInclude Include="t_color_scheme.h" />
+    <ClInclude Include="t_enemy.h" />
+    <ClInclude Include="global.h" />
+    <ClInclude Include="t_bomb.h" />
+    <ClInclude Include="t_direction.h" />
+    <ClInclude Include="t_exit.h" />
+    <ClInclude Include="t_floor.h" />
+    <ClInclude Include="t_location.h" />
+    <ClInclude Include="t_object.h" />
+    <ClInclude Include="t_player.h" />
+    <ClInclude Include="t_screen.h" />
+    <ClInclude Include="t_view.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

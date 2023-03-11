@@ -2,5 +2,26 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="global.cpp" />
+    <ClCompile Include="t_bomb.cpp" />
+    <ClCompile Include="t_player.cpp" />
+    <ClCompile Include="t_game.cpp" />
+    <ClCompile Include="t_floor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="t_player.h" />
+    <ClInclude Include="global.h" />
+    <ClInclude Include="t_bomb.h" />
+    <ClInclude Include="t_direction.h" />
+    <ClInclude Include="t_floor.h" />
+    <ClInclude Include="t_location.h" />
+    <ClInclude Include="t_object.h" />
+    <ClInclude Include="t_exit.h" />
+    <ClInclude Include="t_view.h" />
+    <ClInclude Include="t_enemy.h" />
+    <ClInclude Include="t_color_scheme.h" />
+    <ClInclude Include="t_screen.h" />
+    <ClInclude Include="t_tileset.h" />
+    <ClInclude Include="t_game.h" />
   </ItemGroup>
 </Project>
