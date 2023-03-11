@@ -3,6 +3,19 @@
 
 struct t_color_scheme {
 	vector<pair<rgb, rgb>> presets = {
+		// black backgrounds
+		{ 0xc030a0, 0x101010 }, // purple-black
+		{ 0xff4080, 0x101010 }, // pink-black
+		{ 0xe0e0e0, 0x101010 }, // white-black
+		{ 0x404040, 0x101010 }, // gray-black
+		{ 0xffff50, 0x101010 }, // yellow-black
+		{ 0xffa030, 0x101010 }, // amber-black
+		{ 0x3050ff, 0x101010 }, // blue-black
+		{ 0x30ffff, 0x101010 }, // cyan-black
+		{ 0x30ff50, 0x101010 }, // green-black
+		{ 0xff4040, 0x101010 }, // red-black
+	};
+	vector<pair<rgb, rgb>> old_presets = {
 		// purple backgrounds
 		{ 0x1010a0, 0x902080 }, // blue-purple
 		{ 0xe05080, 0x902080 }, // pink-purple

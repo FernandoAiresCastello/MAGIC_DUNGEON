@@ -118,8 +118,8 @@ void t_player::destroy_walls_around()
 void t_player::next_floor()
 {
 	floor_nr++;
-	bombs = max_bombs;
-	life = max_life;
+	//bombs = max_bombs;
+	//life = max_life;
 }
 void t_player::trigger_collisions()
 {

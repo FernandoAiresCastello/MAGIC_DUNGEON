@@ -181,6 +181,17 @@ struct t_tileset {
 			"01000100"
 			"00000000"
 		);
+		tgl.tile_new("spider_2",
+			"00000000"
+			"01100110"
+			"10011001"
+			"00111100"
+			"11111111"
+			"10111101"
+			"00111000"
+			"01000100"
+		);
 		tgl.tile_add("spider", "spider_1");
+		tgl.tile_add("spider", "spider_2");
 	}
 };

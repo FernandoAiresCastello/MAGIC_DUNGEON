@@ -16,6 +16,7 @@ struct t_game {
 	void run();
 	void enemy_turn();
 	t_enemy* enemy_at(int x, int y);
+	t_enemy* get_random_enemy_around_player();
 	void confirm_goto_next_floor();
 
 private:

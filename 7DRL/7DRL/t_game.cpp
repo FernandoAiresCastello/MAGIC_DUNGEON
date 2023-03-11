@@ -40,12 +40,39 @@ void t_game::run()
 void t_game::enemy_turn()
 {
 	move_enemies();
+
+	bool chance = tgl.rnd(0, 100) > 80;
+	if (chance) {
+		t_enemy* enemy = get_random_enemy_around_player();
+		if (enemy) {
+			player->hurt_by_enemy(enemy);
+		}
+	}
 }
 t_enemy* t_game::enemy_at(int x, int y)
 {
 	for (auto& enemy : enemies) {
 		if (enemy.x == x && enemy.y == y && enemy.life > 0) {
 			return &enemy;
+		}
+	}
+	return nullptr;
+}
+t_enemy* t_game::get_random_enemy_around_player()
+{
+	int x = player->get_x();
+	int y = player->get_y();
+
+	t_enemy* enemies[4] = {
+		enemy_at(x, y - 1),
+		enemy_at(x, y + 1),
+		enemy_at(x - 1, y),
+		enemy_at(x + 1, y)
+	};
+
+	for (int i = 0; i < 4; i++) {
+		if (enemies[i] != nullptr) {
+			return enemies[i];
 		}
 	}
 	return nullptr;
@@ -67,7 +94,10 @@ t_enemy t_game::generate_enemy()
 }
 void t_game::generate_enemies()
 {
-	const int max_enemies = 100;
+	int max_enemies = 100 + ((tgl.rnd(2, 5)) * player->get_floor());
+	if (max_enemies > 1000) {
+		max_enemies = 1000;
+	}
 	enemies.clear();
 
 	for (int i = 0; i < max_enemies; i++) {
@@ -306,6 +336,7 @@ void t_game::clear_top_text()
 void t_game::clear_bottom_text()
 {
 	for (int x = 0; x < screen->cols; x++) {
+		tgl.print_tiled(" ", x, screen->rows - 2);
 		tgl.print_tiled(" ", x, screen->rows - 1);
 	}
 }
@@ -440,16 +471,21 @@ void t_game::move_enemies()
 		if (enemy.life <= 0) continue;
 		bool chance = tgl.rnd(0, 100) > 50;
 		if (!chance) continue;
+		
 		int dx = tgl.rnd(-1, 1);
 		int dy = tgl.rnd(-1, 1);
 		int newx = enemy.x + dx;
 		int newy = enemy.y + dy;
+
 		t_object& o = cur_floor->get(newx, newy).obj;
+
 		if (player->get_x() == newx && player->get_y() == newy) {
 			player->hurt_by_enemy(&enemy);
 		} else if (o != t_object::wall && o != t_object::none) {
-			enemy.x += dx;
-			enemy.y += dy;
+			if (enemy_at(newx, newy) == nullptr) {
+				enemy.x = newx;
+				enemy.y = newy;
+			}
 		}
 	}
 }
@@ -464,15 +500,25 @@ void t_game::game_loop()
 	tgl.system();
 
 	int key = tgl.kb_lastkey();
-	if (key == SDLK_ESCAPE) tgl.exit();
+
 	// player actions
-	else if (key == SDLK_RIGHT) player->move(1, 0);
-	else if (key == SDLK_LEFT) player->move(-1, 0);
-	else if (key == SDLK_DOWN) player->move(0, 1);
-	else if (key == SDLK_UP) player->move(0, -1);
-	else if (key == SDLK_PERIOD) player->move(0, 0);
-	else if (key == SDLK_SPACE) player->drop_bomb();
+	if (key == SDLK_RIGHT || key == SDLK_d || key == SDLK_KP_6) 
+		player->move(1, 0);
+	else if (key == SDLK_LEFT || key == SDLK_a || key == SDLK_KP_4) 
+		player->move(-1, 0);
+	else if (key == SDLK_DOWN || key == SDLK_s || key == SDLK_KP_2) 
+		player->move(0, 1);
+	else if (key == SDLK_UP || key == SDLK_w || key == SDLK_KP_8) 
+		player->move(0, -1);
+	else if (key == SDLK_PERIOD || key == SDLK_RETURN || key == SDLK_KP_ENTER) 
+		player->move(0, 0);
+	else if (key == SDLK_SPACE || key == SDLK_KP_5) 
+		player->drop_bomb();
 	// special
-	else if (key == SDLK_c) randomize_color_scheme();
-	else if (key == SDLK_TAB) confirm_goto_next_floor();
+	else if (key == SDLK_ESCAPE)
+		tgl.exit();
+	else if (key == SDLK_F2) 
+		randomize_color_scheme();
+	else if (key == SDLK_F3) 
+		confirm_goto_next_floor();
 }
