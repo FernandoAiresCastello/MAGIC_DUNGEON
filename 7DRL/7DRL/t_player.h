@@ -48,6 +48,7 @@ struct t_player {
 	void restore_bombs(int count);
 	void obtain_map();
 	void gain_exp(int points);
+	void confirm_suicide();
 
 private:
 	t_game* game = nullptr;

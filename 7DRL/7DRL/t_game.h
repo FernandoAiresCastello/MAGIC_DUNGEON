@@ -25,12 +25,14 @@ struct t_game {
 	void game_over();
 
 private:
+	bool debug_mode = false;
 	t_screen* screen = nullptr;
 	t_view* view = nullptr;
 	t_floor* cur_floor = nullptr;
 	t_player* player = nullptr;
 
 	void init();
+	void load_config();
 	int random_x();
 	int random_y();
 	t_enemy generate_enemy();

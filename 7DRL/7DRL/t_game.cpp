@@ -17,6 +17,8 @@ t_game::~t_game()
 }
 void t_game::init()
 {
+	load_config();
+
 	screen = new t_screen();
 	view = &screen->view;
 	cur_floor = new t_floor();
@@ -29,8 +31,27 @@ void t_game::init()
 
 	t_tileset::init();
 	load_sounds();
+	screen->color_scheme.load();
 
 	goto_next_floor();
+}
+void t_game::load_config()
+{
+	if (!tgl.file_exists("config.ini")) return;
+
+	auto lines = tgl.file_lines("config.ini");
+	for (auto& raw_line : lines) {
+		string line = tgl.trim(raw_line);
+		if (line.empty()) continue;
+		auto parts = tgl.split(line, '=');
+		if (parts.size() != 2) continue;
+		string cfg = tgl.lcase(tgl.trim(parts[0]));
+		string value = tgl.lcase(tgl.trim(parts[1]));
+
+		if (cfg == "debug" && value == "true") {
+			debug_mode = true;
+		}
+	}
 }
 void t_game::run()
 {
@@ -95,12 +116,25 @@ void t_game::generate_shops()
 t_enemy t_game::generate_enemy()
 {
 	t_enemy e;
-
-	e.tile = "spider";
 	e.x = random_x();
 	e.y = random_y();
-	e.life = player->get_floor() + tgl.rnd(0, 5);
-	e.attack = player->get_floor() + tgl.rnd(0, 3);
+	e.life = player->get_floor();
+	e.attack = player->get_floor();
+
+	int type = tgl.rnd(0, 2);
+	if (type == 0) {
+		e.tile = "slime";
+		e.life += tgl.rnd(1, 3);
+		e.attack += tgl.rnd(0, 1);
+	} else if (type == 1) {
+		e.tile = "spider";
+		e.life += tgl.rnd(3, 5);
+		e.attack += tgl.rnd(1, 5);
+	} else if (type == 2) {
+		e.tile = "ghost";
+		e.life += tgl.rnd(10, 20);
+		e.attack += tgl.rnd(10, 20);
+	}
 
 	return e;
 }
@@ -190,11 +224,11 @@ void t_game::generate_wall(int x, int y, int length, int orient)
 
 void t_game::randomize_color_scheme()
 {
-	int color_preset = tgl.rnd(0, screen->color_scheme.presets.size() - 1);
+	int color_preset = tgl.rnd(0, screen->color_scheme.user_presets.size() - 1);
 
 	cur_floor->color(
-		screen->color_scheme.presets[color_preset].first, 
-		screen->color_scheme.presets[color_preset].second);
+		screen->color_scheme.user_presets[color_preset].first,
+		screen->color_scheme.user_presets[color_preset].second);
 }
 void t_game::init_current_floor()
 {
@@ -270,7 +304,7 @@ void t_game::draw_enemies()
 			if (cur_floor->visited(mapx, mapy)) {
 				for (auto& e : enemies) {
 					if (e.life > 0 && e.x == mapx && e.y == mapy) {
-						tgl.draw_tiled("spider", scrx, scry);
+						tgl.draw_tiled(e.tile, scrx, scry);
 					}
 				}
 			}
@@ -373,6 +407,10 @@ void t_game::draw_info()
 	y = screen->rows - 1;
 	tgl.print_tiled(tgl.fmt("LV:%i XP:%i/%i",
 		player->get_exp_level(), player->get_exp(), player->get_max_exp()), 1, y);
+
+	if (debug_mode) {
+		tgl.print_tiled("DBG", screen->cols - 4, y);
+	}
 }
 void t_game::sync_player()
 {
@@ -518,19 +556,26 @@ void t_game::process_input()
 		player->move(0, 0);
 	else if (key == SDLK_SPACE)
 		player->drop_bomb();
-	// special
-	else if (key == SDLK_ESCAPE)
-		tgl.exit();
-	else if (key == SDLK_F2)
-		randomize_color_scheme();
-	else if (key == SDLK_F3)
-		player->grab_coin(100);
-	else if (key == SDLK_F4)
-		player->gain_exp(100);
-	else if (key == SDLK_F5)
-		confirm_goto_next_floor();
-	else if (key == SDLK_F6)
-		change_colors();
+	else if (key == SDLK_q && tgl.kb_ctrl())
+		player->confirm_suicide();
+
+	// special / debug
+	else if (debug_mode) {
+		if (key == SDLK_ESCAPE)
+			tgl.exit();
+		else if (key == SDLK_F2)
+			randomize_color_scheme();
+		else if (key == SDLK_F3)
+			player->grab_coin(100);
+		else if (key == SDLK_F4)
+			player->gain_exp(100);
+		else if (key == SDLK_F5)
+			confirm_goto_next_floor();
+		else if (key == SDLK_F6)
+			change_colors();
+		else if (key == SDLK_F7)
+			player->obtain_map();
+	}
 }
 void t_game::change_colors()
 {
@@ -557,15 +602,14 @@ void t_game::change_colors()
 			sel = sel_bg;
 		} else if (key == SDLK_UP) {
 			sel = sel_fg;
-		} else if (key == SDLK_TAB) {
-
+		} else if (key == SDLK_s && tgl.kb_ctrl()) {
 			screen->color_scheme.user_presets.push_back({ cur_floor->forecolor, cur_floor->backcolor });
 			screen->print_pause(" Color scheme saved ");
-			string file_output = "";
-			for (auto& preset : screen->color_scheme.user_presets) {
-				file_output += tgl.fmt("0x%06x,0x%06x", preset.first, preset.second) + "\n";
-			}
-			tgl.file_csave("color_schemes.txt", file_output);
+			screen->color_scheme.save();
+
+		} else if (key == SDLK_l && tgl.kb_ctrl()) {
+			screen->print_pause(" Color scheme loaded ");
+			screen->color_scheme.load();
 
 		} else if (key == SDLK_q) { // R+
 			if (sel == sel_fg) cur_floor->forecolor = screen->inc_color_r(cur_floor->forecolor);
@@ -591,8 +635,8 @@ void t_game::change_colors()
 }
 void t_game::game_over()
 {
-	save_hiscores();
 	redraw_screen();
+	save_hiscores();
 	tgl.pause(200);
 	tgl.sound("game_over");
 	screen->print_pause(" *** GAME  OVER ***", 1400);

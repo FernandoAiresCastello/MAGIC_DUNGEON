@@ -75,5 +75,5 @@ void t_bomb::detonate()
 }
 int t_bomb::get_damage()
 {
-	return tgl.rnd(40, 60);
+	return tgl.rnd(90, 200);
 }

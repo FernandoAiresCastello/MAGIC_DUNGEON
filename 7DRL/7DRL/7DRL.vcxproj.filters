@@ -25,5 +25,9 @@
     <ClInclude Include="t_tileset.h" />
     <ClInclude Include="t_game.h" />
     <ClInclude Include="t_shop.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="7DRL.rc" />
   </ItemGroup>
 </Project>

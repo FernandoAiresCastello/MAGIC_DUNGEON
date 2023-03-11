@@ -70,7 +70,7 @@ struct t_screen {
 		int red = (color >> 16) & 0xff;
 		int green = (color >> 8) & 0xff;
 		int blue = color & 0xff;
-		red += amount;
+		if (red == 0xf0) red = 0xff; else red += amount;
 		if (red > 0xff) {
 			red = 0;
 		}
@@ -81,7 +81,7 @@ struct t_screen {
 		int red = (color >> 16) & 0xff;
 		int green = (color >> 8) & 0xff;
 		int blue = color & 0xff;
-		green += amount;
+		if (green == 0xf0) green = 0xff; else green += amount;
 		if (green > 0xff) {
 			green = 0;
 		}
@@ -92,7 +92,7 @@ struct t_screen {
 		int red = (color >> 16) & 0xff;
 		int green = (color >> 8) & 0xff;
 		int blue = color & 0xff;
-		blue += amount;
+		if (blue == 0xf0) blue = 0xff; else blue += amount;
 		if (blue > 0xff) {
 			blue = 0;
 		}
@@ -103,6 +103,7 @@ struct t_screen {
 		int red = (color >> 16) & 0xff;
 		int green = (color >> 8) & 0xff;
 		int blue = color & 0xff;
+		if (red == 0xff) amount++;
 		red += amount;
 		if (red < 0x00) {
 			red = 0xff;
@@ -114,6 +115,7 @@ struct t_screen {
 		int red = (color >> 16) & 0xff;
 		int green = (color >> 8) & 0xff;
 		int blue = color & 0xff;
+		if (green == 0xff) amount++;
 		green += amount;
 		if (green < 0x00) {
 			green = 0xff;
@@ -125,6 +127,7 @@ struct t_screen {
 		int red = (color >> 16) & 0xff;
 		int green = (color >> 8) & 0xff;
 		int blue = color & 0xff;
+		if (blue == 0xff) amount++;
 		blue += amount;
 		if (blue < 0x00) {
 			blue = 0xff;

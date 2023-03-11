@@ -154,6 +154,7 @@
     <ClCompile Include="t_shop.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="t_game.h" />
     <ClInclude Include="t_shop.h" />
     <ClInclude Include="t_tileset.h" />
@@ -169,6 +170,9 @@
     <ClInclude Include="t_player.h" />
     <ClInclude Include="t_screen.h" />
     <ClInclude Include="t_view.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="7DRL.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

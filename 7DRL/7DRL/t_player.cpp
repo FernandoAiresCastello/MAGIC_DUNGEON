@@ -50,7 +50,7 @@ void t_player::move(int dx, int dy)
 		tgl.play_notes("l30o3ccc");
 		screen->print_pause("    Out of bounds");
 	} else if (enemy_detected != nullptr) {
-		bool chance = tgl.rnd(0, 100) > 10;
+		bool chance = tgl.rnd(0, 100) > 30;
 		if (chance) {
 			attack_enemy(enemy_detected);
 		} else {
@@ -210,5 +210,12 @@ void t_player::gain_exp(int points)
 		screen->print_pause("      Level up!");
 		exp_level++;
 		exp = 0;
+	}
+}
+void t_player::confirm_suicide()
+{
+	if (screen->confirm("  Kill self? (Y/N)")) {
+		life = 0;
+		game->game_over();
 	}
 }
