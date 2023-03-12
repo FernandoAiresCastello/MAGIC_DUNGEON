@@ -46,6 +46,7 @@ void t_shop::sell(t_player* player, t_screen* screen)
 	}
 
 	if (not_enough_money) {
+		tgl.sound("oops");
 		screen->print_pause(" Not enough coins!");
 	}
 	player->step_back();

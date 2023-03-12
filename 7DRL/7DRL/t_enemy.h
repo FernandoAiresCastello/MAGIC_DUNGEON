@@ -7,5 +7,5 @@ struct t_enemy {
 	int y = 0;
 	int life = 0;
 	int attack = 0;
-	const int exp = 1;
+	int exp = 0;
 };

@@ -45,15 +45,15 @@ void t_bomb::detonate()
 	active = false;
 	tgl.sound("explosion");
 
-	cur_floor->detonate_wall(x - 1, y - 1);
-	cur_floor->detonate_wall(x + 0, y - 1);
-	cur_floor->detonate_wall(x + 1, y - 1);
-	cur_floor->detonate_wall(x - 1, y);
-	cur_floor->detonate_wall(x, y);
-	cur_floor->detonate_wall(x + 1, y);
-	cur_floor->detonate_wall(x - 1, y + 1);
-	cur_floor->detonate_wall(x + 0, y + 1);
-	cur_floor->detonate_wall(x + 1, y + 1);
+	cur_floor->detonate_wall_or_trap(x - 1, y - 1);
+	cur_floor->detonate_wall_or_trap(x + 0, y - 1);
+	cur_floor->detonate_wall_or_trap(x + 1, y - 1);
+	cur_floor->detonate_wall_or_trap(x - 1, y);
+	cur_floor->detonate_wall_or_trap(x, y);
+	cur_floor->detonate_wall_or_trap(x + 1, y);
+	cur_floor->detonate_wall_or_trap(x - 1, y + 1);
+	cur_floor->detonate_wall_or_trap(x + 0, y + 1);
+	cur_floor->detonate_wall_or_trap(x + 1, y + 1);
 
 	int px = player->get_x();
 	int py = player->get_y();

@@ -26,10 +26,11 @@ void t_floor::set_entity(t_object e, int x, int y)
 		locations[y][x].entity = e;
 	}
 }
-void t_floor::detonate_wall(int x, int y)
+void t_floor::detonate_wall_or_trap(int x, int y)
 {
-	if (get(x, y).obj == t_object::wall) {
-		set_obj(t_object::ground, x, y);
+	t_object& obj = get(x, y).obj;
+	if (obj == t_object::wall || obj == t_object::trap) {
+		set_obj(t_object::rubble, x, y);
 	}
 }
 void t_floor::visit(int x, int y)

@@ -16,7 +16,7 @@ struct t_floor {
 	t_location& get(int x, int y);
 	void set_obj(t_object o, int x, int y);
 	void set_entity(t_object e, int x, int y);
-	void detonate_wall(int x, int y);
+	void detonate_wall_or_trap(int x, int y);
 	void visit(int x, int y);
 	void visit_all();
 	void unvisit(int x, int y);

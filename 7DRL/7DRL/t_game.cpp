@@ -138,20 +138,27 @@ t_enemy t_game::generate_enemy()
 
 	if (type == 0) {
 		e.tile = "slime";
-		e.life += tgl.rnd(1, 3);
+		e.life += tgl.rnd(0, 1);
 		e.attack += tgl.rnd(0, 1);
+		e.exp = tgl.rnd(1, 3);
+
 	} else if (type == 1) {
 		e.tile = "spider";
-		e.life += tgl.rnd(3, 5);
+		e.life += tgl.rnd(1, 3);
 		e.attack += tgl.rnd(1, 5);
+		e.exp = tgl.rnd(5, 10);
+
 	} else if (type == 2) {
 		e.tile = "skelet";
 		e.life += tgl.rnd(10, 20);
 		e.attack += tgl.rnd(10, 20);
+		e.exp = tgl.rnd(15, 20);
+
 	} else if (type == 3) {
 		e.tile = "ghost";
 		e.life += tgl.rnd(20, 50);
 		e.attack += tgl.rnd(20, 50);
+		e.exp = tgl.rnd(25, 50);
 	}
 
 	return e;
@@ -266,7 +273,12 @@ void t_game::init_current_floor()
 	for (int y = 0; y < cur_floor->height; y++) {
 		for (int x = 0; x < cur_floor->width; x++) {
 			cur_floor->unvisit(x, y);
-			cur_floor->set_obj(t_object::ground, x, y);
+			bool trap_chance = tgl.rnd(0, 100) > 90;
+			if (trap_chance) {
+				cur_floor->set_obj(t_object::trap, x, y);
+			} else {
+				cur_floor->set_obj(t_object::ground, x, y);
+			}
 		}
 	}
 	// corners
@@ -380,7 +392,13 @@ void t_game::draw_location(int mapx, int mapy, int scrx, int scry)
 
 	} else if (loc.obj == t_object::stairs) {
 		tgl.draw_tiled("stairs", scrx, scry);
-	}
+
+	} else if (loc.obj == t_object::trap) {
+		tgl.draw_tiled("trap", scrx, scry);
+
+	} else if (loc.obj == t_object::rubble) {
+		tgl.draw_tiled("rubble", scrx, scry);
+	} 
 }
 void t_game::draw_current_floor()
 {
@@ -453,6 +471,8 @@ void t_game::visit_surroundings()
 void t_game::load_sounds()
 {
 	tgl.sound_load("intro", "sound/intro.wav");
+	tgl.sound_load("oops", "sound/oops.wav");
+	tgl.sound_load("trap", "sound/trap.wav");
 	tgl.sound_load("explosion", "sound/bomb.wav");
 	tgl.sound_load("coin", "sound/coin.wav");
 	tgl.sound_load("slash", "sound/slash.wav");

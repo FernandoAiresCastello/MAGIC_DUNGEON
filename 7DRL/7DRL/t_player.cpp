@@ -12,6 +12,8 @@ t_player::t_player(t_game* game, t_floor* cur_floor, t_screen* screen) :
 	this->game = game;
 	this->cur_floor = cur_floor;
 	this->screen = screen;
+
+	calc_max_exp();
 }
 
 int t_player::get_floor() { return floor_nr; }
@@ -23,7 +25,6 @@ int t_player::get_life() { return life; }
 int t_player::get_coins() { return coins; }
 int t_player::get_bombs() { return bombs; }
 int t_player::get_exp() { return exp; }
-int t_player::get_max_exp() { return max_exp; }
 int t_player::get_exp_level() { return exp_level; }
 
 void t_player::set_pos(int newx, int newy)
@@ -47,7 +48,7 @@ void t_player::move(int dx, int dy)
 	t_enemy* enemy_detected = game->enemy_at(newx, newy);
 
 	if (is_oob(newx, newy)) {
-		tgl.play_notes("l30o3ccc");
+		tgl.sound("oops");
 		screen->print_pause("    Out of bounds");
 	} else if (enemy_detected != nullptr) {
 		bool chance = tgl.rnd(0, 100) > 30;
@@ -69,7 +70,10 @@ bool t_player::can_move_to(int newx, int newy)
 	t_object& o = loc.obj;
 	t_object& e = loc.entity;
 
-	return o == t_object::ground || o == t_object::stairs || o == t_object::coin;
+	return 
+		o == t_object::ground || o == t_object::rubble || 
+		o == t_object::stairs || o == t_object::coin || 
+		o == t_object::trap;
 }
 void t_player::step_back()
 {
@@ -88,6 +92,10 @@ t_location& t_player::getloc()
 bool t_player::is_on_stairs()
 {
 	return getloc().obj == t_object::stairs;
+}
+bool t_player::is_on_trap()
+{
+	return getloc().obj == t_object::trap;
 }
 bool t_player::found_shop(t_shoptype type)
 {
@@ -141,6 +149,8 @@ void t_player::trigger_collisions()
 {
 	if (is_on_stairs()) {
 		game->confirm_goto_next_floor();
+	}  else if (is_on_trap()) {
+		hurt_by_trap();
 	} else if (found_coin()) {
 		grab_coin();
 	} else if (found_shop(t_shoptype::life)) {
@@ -163,6 +173,11 @@ void t_player::hurt_by_bomb()
 {
 	receive_damage(bomb.get_damage());
 }
+void t_player::hurt_by_trap()
+{
+	tgl.sound("trap");
+	receive_damage(tgl.rnd(1, 3));
+}
 void t_player::hurt_by_enemy(t_enemy* enemy)
 {
 	tgl.sound("enemy_attack");
@@ -172,7 +187,7 @@ void t_player::attack_enemy(t_enemy* enemy)
 {
 	if (enemy->life > 0) {
 		tgl.sound("slash");
-		enemy->life -= (power + (exp_level - 1));
+		enemy->life -= power;
 		if (enemy->life <= 0) {
 			tgl.sound("enemy_killed");
 			gain_exp(enemy->exp);
@@ -206,14 +221,28 @@ void t_player::obtain_map()
 {
 	cur_floor->visit_all();
 }
+int t_player::get_max_exp()
+{
+	return max_exp;
+}
+void t_player::calc_max_exp()
+{
+	int base_max = 20;
+	max_exp = base_max + (4 * exp_level);
+	if (max_exp > 999) {
+		max_exp = 999;
+	}
+}
 void t_player::gain_exp(int points)
 {
 	exp += points;
-	if (exp > max_exp) {
+	if (exp > get_max_exp() && exp_level < 99) {
 		tgl.sound("level_up");
 		screen->print_pause("      Level up!");
 		exp_level++;
 		exp = 0;
+		calc_max_exp();
+		power++;
 	}
 }
 void t_player::confirm_suicide()

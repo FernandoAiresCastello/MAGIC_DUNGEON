@@ -33,6 +33,7 @@ struct t_player {
 	bool is_oob(int newx, int newy);
 	t_location& getloc();
 	bool is_on_stairs();
+	bool is_on_trap();
 	bool found_coin();
 	bool found_shop(t_shoptype type);
 	void grab_coin(int count = 1);
@@ -42,6 +43,7 @@ struct t_player {
 	void next_floor();
 	void trigger_collisions();
 	void hurt_by_bomb();
+	void hurt_by_trap();
 	void hurt_by_enemy(t_enemy* enemy);
 	void attack_enemy(t_enemy* enemy);
 	bool spend_coins(int count);
@@ -68,8 +70,9 @@ private:
 	int coins = 0;
 	int power = 1;
 	int exp = 0;
-	const int max_exp = 100;
 	int exp_level = 1;
+	int max_exp = 0;
 
 	void receive_damage(int damage);
+	void calc_max_exp();
 };
