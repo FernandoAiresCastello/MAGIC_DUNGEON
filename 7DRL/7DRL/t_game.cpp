@@ -34,7 +34,9 @@ void t_game::init()
 	load_sounds();
 	screen->color_scheme.load();
 
-	show_game_intro();
+	if (!skip_intro) {
+		show_game_intro();
+	}
 	goto_next_floor();
 }
 void t_game::load_config()
@@ -52,6 +54,8 @@ void t_game::load_config()
 
 		if (cfg == "debug" && value == "true") {
 			debug_mode = true;
+		} else if (cfg == "skip_intro" && value == "true") {
+			skip_intro = true;
 		} else if (cfg == "initial_floor") {
 			player->set_initial_floor(tgl.to_int(value) - 1);
 		}
@@ -255,7 +259,16 @@ void t_game::randomize_color_scheme()
 		screen->color_scheme.user_presets[color_preset].first,
 		screen->color_scheme.user_presets[color_preset].second);
 }
-void t_game::init_current_floor()
+bool t_game::get_trap_gen_chance(int floor_nr)
+{
+	if (floor_nr < 5) return tgl.rnd_chance(1);
+	else if (floor_nr < 10) return tgl.rnd_chance(2);
+	else if (floor_nr < 20) return tgl.rnd_chance(4);
+	else if (floor_nr < 30) return tgl.rnd_chance(7);
+	else if (floor_nr < 50) return tgl.rnd_chance(10);
+	else return tgl.rnd_chance(15);
+}
+void t_game::generate_floor()
 {
 	const int min_room_w = 3;
 	const int min_room_h = 3;
@@ -273,7 +286,7 @@ void t_game::init_current_floor()
 	for (int y = 0; y < cur_floor->height; y++) {
 		for (int x = 0; x < cur_floor->width; x++) {
 			cur_floor->unvisit(x, y);
-			bool trap_chance = tgl.rnd(0, 100) > 90;
+			bool trap_chance = get_trap_gen_chance(player->get_floor());
 			if (trap_chance) {
 				cur_floor->set_obj(t_object::trap, x, y);
 			} else {
@@ -528,7 +541,7 @@ void t_game::goto_next_floor()
 	int player_y = random_y();
 	player->set_pos(player_x, player_y);
 
-	init_current_floor();
+	generate_floor();
 	cur_floor->set_obj(t_object::ground, player_x, player_y);
 	player->destroy_walls_around();
 

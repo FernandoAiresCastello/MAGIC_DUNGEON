@@ -28,6 +28,7 @@ struct t_game {
 
 private:
 	bool debug_mode = false;
+	bool skip_intro = false;
 	t_screen* screen = nullptr;
 	t_view* view = nullptr;
 	t_floor* cur_floor = nullptr;
@@ -38,13 +39,14 @@ private:
 	int random_x();
 	int random_y();
 	t_enemy generate_enemy();
+	bool get_trap_gen_chance(int floor_nr);
+	void generate_floor();
 	void generate_shops();
 	void generate_enemies();
 	void generate_exit(int x, int y);
 	void generate_room(int x, int y, int w, int h);
 	void generate_wall(int x, int y, int length, int orient);
 	void randomize_color_scheme();
-	void init_current_floor();
 	bool is_enemy_within_view(t_enemy& e);
 	void draw_enemies();
 	void draw_location(int mapx, int mapy, int scrx, int scry);

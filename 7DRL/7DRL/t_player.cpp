@@ -176,7 +176,7 @@ void t_player::hurt_by_bomb()
 void t_player::hurt_by_trap()
 {
 	tgl.sound("trap");
-	receive_damage(tgl.rnd(1, 3));
+	receive_damage(tgl.rnd(5, 10));
 }
 void t_player::hurt_by_enemy(t_enemy* enemy)
 {
