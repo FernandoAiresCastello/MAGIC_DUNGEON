@@ -25,7 +25,7 @@ void t_game::init()
 	load_config();
 
 	tgl.window_gbc(0x000000, 5);
-	tgl.title(GAME_TITLE);
+	tgl.title(GAME_TITLE " " GAME_VERSION);
 	tgl.mouse(false);
 	screen->cols = tgl.cols();
 	screen->rows = tgl.rows();
@@ -860,7 +860,10 @@ void t_game::show_game_intro()
 
 	//	tgl.print_tiled("                    ", 0, 0);
 		tgl.print_tiled("   Welcome to the   ", 0, 1);
-		tgl.print_tiled(" ~ MAGIC DUNGEON! ~ ", 0, 3);
+		tgl.print_tiled(" ~ MAGIC DUNGEON! ~ ", 0, 5);
+
+		tgl.font_color(0x606060, backcolor);
+		tgl.print_tiled(GAME_VERSION, 13, 6);
 
 		int y = 9;
 
@@ -877,12 +880,50 @@ void t_game::show_game_intro()
 		tgl.draw_tiled("stairs", 13, y + 1);
 		tgl.draw_tiled("solid", 14, y + 1);
 
-		tgl.print_tiled("   Push ENTER key   ", 0, 14);
+		tgl.font_color(white, backcolor);
+		tgl.print_tiled("ENTER: Start", 2, 13);
+		tgl.print_tiled("   F1: Controls", 2, 14);
+
 		tgl.font_color(white, backcolor);
 		tgl.print_tiled(info.substr(info_offset, 18), 1, 16);
 
 		tgl.system();
-		if (!tgl.kb_alt() && tgl.kb_lastkey() == SDLK_RETURN) return;
-		if (tgl.kb_esc()) tgl.exit();
+
+		int key = tgl.kb_lastkey();
+		if (key == SDLK_RETURN && !tgl.kb_alt()) return;
+		else if (key == SDLK_F1) show_controls();
+		else if (key == SDLK_ESCAPE) tgl.exit();
+	}
+}
+void t_game::show_controls()
+{
+	const rgb white = 0xe0e0e0;
+	const rgb yellow = 0xe0e010;
+	rgb forecolor = white;
+	rgb backcolor = 0x101010;
+	tgl.backcolor(backcolor);
+	tgl.font_transparent(false);
+
+	bool done = false;
+	while (tgl.running() && !done) {
+		
+		tgl.clear();
+		tgl.font_color(yellow, backcolor);
+		tgl.print_tiled("Controls:", 1, 1);
+
+		tgl.font_color(white, backcolor);
+		tgl.print_tiled("Arrow keys = move", 1, 4);
+		tgl.print_tiled("W, A, S, D = move", 1, 6);
+		tgl.print_tiled("Space = drop bomb", 1, 8);
+		tgl.print_tiled("Enter, . = wait", 1, 10);
+		tgl.print_tiled("Ctrl+Q = give up", 1, 12);
+		tgl.print_tiled("Alt+Enter = ", 1, 14);
+		tgl.print_tiled(" toggle fullscreen", 1, 15);
+
+		tgl.system();
+
+		int key = tgl.kb_lastkey();
+		if (key == SDLK_RETURN && !tgl.kb_alt()) done = true;
+		else if (key == SDLK_F1 || key == SDLK_ESCAPE) done = true;
 	}
 }

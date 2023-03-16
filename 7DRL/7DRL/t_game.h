@@ -65,4 +65,5 @@ private:
 	void change_colors();
 	void save_hiscores();
 	void show_game_intro();
+	void show_controls();
 };
