@@ -1,6 +1,8 @@
 # MAGIC DUNGEON
 Explore the 50 floors of the magically (procedurally) generated dungeon, collect all the treasure and escape alive!
 
+![Logo](https://github.com/FernandoAiresCastello/MAGIC_DUNGEON/raw/master/Images/cover.fw.png)
+
 I submitted this game for the [2023 7DRL](https://itch.io/jam/7drl-challenge-2023/rate/1965254) on Itch.io
 
 Download the game here: https://fernandoairescastello.itch.io/magic-dungeon
